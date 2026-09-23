@@ -105,11 +105,13 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-trash.hot{background:#c9412a33;box-shadow:inset 0 0 0 3px #c9412a99;}
 .nx-ver{position:fixed;right:max(6px,env(safe-area-inset-right));bottom:max(4px,env(safe-area-inset-bottom));font:600 11px sans-serif;color:#5e492d;opacity:.55;z-index:100;pointer-events:none;}
 .nx-ver-badge{align-self:center;display:inline-block;margin-top:-6px;padding:3px 12px;border-radius:999px;background:#174f92;color:#fff;font:700 13px/1.4 sans-serif;letter-spacing:.04em;}
+.nx-meter{position:absolute;left:50%;top:0.6%;transform:translateX(-50%);z-index:30;background:#102b57d9;color:#fff;font:700 12px/1.5 sans-serif;padding:2px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v13'; // バージョンをタイトル画面と読み込み画面にはっきり表示
+const APP_VER='v14'; // オンライン中に「通信」「描画」の時間を測って表示（原因調べ用）
+// const APP_VER='v13'; // バージョンをタイトル画面と読み込み画面にはっきり表示
 // const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
 // const APP_VER='v11'; // バージョン表示・自動更新を追加
 const h=React.createElement;
@@ -239,7 +241,8 @@ function NextMode({onBack}){
  // 時計合わせ：ping の往復で「サーバーの今」を推定（往復が一番短かった回を信用する）
  const clock=useRef({off:0,rtt:1e9,samples:[]});
  const srvNow=()=>Date.now()+clock.current.off;
- function onPong(m){if(!m.s||!m.t)return;const now=Date.now(),rtt=now-m.t,c=clock.current;
+ const meter=useRef({rtt:[],draw:[],recv:0}),[meterText,setMeterText]=useState('');
+ function onPong(m){if(!m.s||!m.t)return;const now=Date.now(),rtt=now-m.t,c=clock.current;meter.current.rtt.push(rtt);if(meter.current.rtt.length>10)meter.current.rtt.shift();
   c.samples.push({rtt,off:m.s+rtt/2-now});if(c.samples.length>12)c.samples.shift();
   const best=c.samples.reduce((a,b)=>b.rtt<a.rtt?b:a);c.off=best.off;c.rtt=best.rtt;}
  function roughClock(m){const c=clock.current;if(c.samples.length||!m.now)return;c.off=m.now-Date.now();} // ping の返事がまだ無い時の仮合わせ
@@ -278,6 +281,12 @@ function NextMode({onBack}){
   set({...sR.current,phase:'end',count:-1,msg:null});setLobby({step:'err',text});}
  // 見張り：メッセージが途切れたら状態をもらい直す／長く途切れたら入り直す。画面が前に戻った時も確認
  useEffect(()=>{window.__nxBusy=online;},[online]);
+ // 描画の時間：状態を受け取ってから、画面に描き終わる（次のフレームが来る）まで
+ useEffect(()=>{const M=meter.current;if(!M.recv)return;const t0=M.recv;M.recv=0;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{M.draw.push(performance.now()-t0);if(M.draw.length>20)M.draw.shift();}));});
+ useEffect(()=>{if(!online){setMeterText('');return;}const iv=setInterval(()=>{const M=meter.current;
+  const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0,max=a=>a.length?Math.round(Math.max(...a)):0;
+  setMeterText('通信 '+avg(M.rtt)+'ms（最大'+max(M.rtt)+'）　描画 '+avg(M.draw)+'ms（最大'+max(M.draw)+'）');},1000);return()=>clearInterval(iv);},[online]);
  useEffect(()=>{if(!online)return;
   const iv=setInterval(()=>{const gap=Date.now()-lastMsg.current;
    if(retry.current)return;
@@ -307,6 +316,7 @@ function NextMode({onBack}){
   else if(m.type==='nxRematchWait')setRematch({me:m.me,op:m.op});
   else if(m.type==='nxOpLeft'){gone('相手が退出しました');}
   else if(m.type==='nxState'){
+   meter.current.recv=performance.now(); // 受け取った時刻（描き終わるまでを測る）
    if(m.seq&&m.seq<lastSeq.current)return;if(m.seq)lastSeq.current=m.seq;
    const prev=sR.current,msg=m.msg?{...m.msg,landed:prev.msg&&prev.msg.k===m.msg.k?prev.msg.landed:false}:null,ev=m.ev;
    const mine=ev&&ev.who==='p'&&(ev.se==='play'||ev.se==='discard')&&prev.pred; // 自分の操作は先に鳴らしてある
@@ -456,6 +466,7 @@ function NextMode({onBack}){
   queue('p'),
   h('div',{ref:trashRef,className:'nx-action discard nx-trash','aria-label':'トラッシュ（札をここへ引っぱると捨てる）'}),
   online&&netNote&&h('div',{className:'nx-net-note',role:'status'},netNote),
+  online&&meterText&&h('div',{className:'nx-meter'},meterText),
   st.count>=0&&h('div',{className:'nx-count',role:'status',key:'count'+st.count},st.count>0?h(NxNumber,{value:st.count}):'GO'),
   st.msg&&(st.msg.points?h(NxCelebration,{message:st.msg,key:'reward-'+st.msg.k}):h('div',{className:'nx-message',role:'status',key:st.msg.k},st.msg.text)),
   (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
