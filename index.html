@@ -110,7 +110,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v15'; // 計測を自動でサーバーに記録（相手の札が画面に出るまで・自分の操作が届くまで）
+const APP_VER='v16'; // サーバーの50msごとの合図（Wi-Fiを寝かせない）に対応
+// const APP_VER='v15'; // 計測を自動でサーバーに記録（相手の札が画面に出るまで・自分の操作が届くまで）
 // const APP_VER='v14'; // オンライン中に「通信」「描画」の時間を測って表示（原因調べ用）
 // const APP_VER='v13'; // バージョンをタイトル画面と読み込み画面にはっきり表示
 // const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
@@ -264,7 +265,8 @@ function NextMode({onBack}){
   w.onclose=()=>{if(net.current!==w)return;net.current=null;
    if(onl.current&&sess.current){if(!retry.current)resume();} // 対戦中なら自動で復帰を試す（再試行中は下のタイマーに任せる）
    else if(onFail)onFail();};
-  w.onmessage=e=>{lastMsg.current=Date.now();let m;try{m=JSON.parse(e.data);}catch(x){return;}onNet(m);};
+  w.onmessage=e=>{lastMsg.current=Date.now();if(e.data==='h')return; // サーバーの合図（Wi-Fiを起こしておくだけ）
+   let m;try{m=JSON.parse(e.data);}catch(x){return;}onNet(m);};
  }
  function connect(first){const w0=net.current;if(w0&&w0.readyState===1){first();return;}
   setLobby({step:'conn'});openSocket(first,()=>setLobby({step:'err',text:'サーバーにつながりませんでした'}));}
