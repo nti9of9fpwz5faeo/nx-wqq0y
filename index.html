@@ -135,6 +135,10 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-v2 .nx-card.nx-head{left:20.5%;}.nx-v2 .nx-card.nx-d.nx-head{top:8.52%;}.nx-v2 .nx-card.nx-p.nx-head{top:64.52%;}
 .nx-v2 .nx-card.nx-preview{width:13%;height:10.24%;opacity:1;}.nx-v2 .nx-preview.nx-d{top:12.08%;}.nx-v2 .nx-preview.nx-p{top:68.08%;}
 .nx-v2 .nx-card.nx-preview-1{left:41%;}.nx-v2 .nx-card.nx-preview-2{left:55%;}
+/* v30 side：先頭の札をまん中、次の2枚を右はし（相手は上寄せ・自分は下寄せ）。NX_CFG.side:false で元に戻る */
+.nx-v2.nx-side .nx-card.nx-head{left:40.5%;}
+.nx-v2.nx-side .nx-card.nx-preview-1{left:65.5%;}.nx-v2.nx-side .nx-card.nx-preview-2{left:79.5%;}
+.nx-v2.nx-side .nx-preview.nx-d{top:8.52%;}.nx-v2.nx-side .nx-preview.nx-p{top:69.24%;}
 /* 場 */
 .nx-v2 .nx-field-card{width:20%;height:15.75%;top:30.1%;}
 .nx-v2 .nx-slot{position:absolute;top:30.1%;width:20%;height:15.75%;pointer-events:none;}
@@ -164,7 +168,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v29'; // 場の札を消した時の音（はさみ）
+const APP_VER='v30'; // 先頭の札をまん中、次の2枚を右はしへ（NX_CFG.side）
+// const APP_VER='v29'; // 場の札を消した時の音（はさみ）
 // const APP_VER='v29'; // 英語の実況が確実に鳴るように（フォルダ名変更）＋場の札を消した時の音
 // const APP_VER='v28'; // 実況を英語に。10完成・逆転・リーチ・決着の時だけセリフを文字でも出す（ラウンド中は出さない）
 // const APP_VER='v27'; // BGM（Card Battle Riff）を対戦中ループ。タイトルで音楽オンオフ
@@ -217,7 +222,7 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -642,7 +647,7 @@ function NextMode({onBack}){
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&tut>=1&&tut<=3?' nx-tut-glow':'')+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
    {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
- return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
+ return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
   h('span',{className:'nx-score-label d'},'相手'),
