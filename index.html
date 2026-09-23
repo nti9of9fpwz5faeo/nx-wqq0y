@@ -147,6 +147,9 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-v2 .nx-sum .nx-left{height:52%;margin-left:4%;}.nx-v2 .nx-left small{font:700 clamp(10px,2.8vw,15px) sans-serif;color:#102b57;}
 /* ゴミ箱と戻る */
 .nx-v2 .nx-action.discard.nx-trash{left:39%;top:86.3%;width:22%;height:12.375%;border-radius:50%;background:url('img/next-v2/trash.webp') center/100% 100% no-repeat;box-shadow:none;}
+.nx-dc-left{position:absolute;right:-4%;top:-2%;min-width:34%;height:34%;padding:0 6%;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#c9412a;border:2px solid #fff;box-shadow:0 2px 3px #0005;}
+.nx-dc-left .nx-number{height:62%;filter:brightness(0) invert(1);}
+.nx-trash-empty{filter:grayscale(1) opacity(.55);}
 .nx-v2 .nx-trash.hot{background-image:url('img/next-v2/trash-hot.webp');box-shadow:none;}
 .nx-v2 .nx-back{left:3%;top:88.5%;background:#ffffffd9;color:#5a3b1c;}
 .nx-rm{position:absolute;top:2.3%;width:7%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font:700 clamp(12px,4vw,20px)/1 sans-serif;color:#fff;box-shadow:0 2px 0 #0004,inset 0 0 0 2px #fff8;z-index:2;transition:opacity .2s,filter .2s;}
@@ -168,7 +171,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v30'; // 先頭の札をまん中、次の2枚を右はしへ（NX_CFG.side）
+const APP_VER='v31'; // 捨てるのは1ラウンド10枚まで（ゴミ箱に残り枚数）
+// const APP_VER='v30'; // 先頭の札をまん中、次の2枚を右はしへ（NX_CFG.side）
 // const APP_VER='v29'; // 場の札を消した時の音（はさみ）
 // const APP_VER='v29'; // 英語の実況が確実に鳴るように（フォルダ名変更）＋場の札を消した時の音
 // const APP_VER='v28'; // 実況を英語に。10完成・逆転・リーチ・決着の時だけセリフを文字でも出す（ラウンド中は出さない）
@@ -222,7 +226,7 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -490,7 +494,7 @@ function NextMode({onBack}){
    if(m.phase==='play'&&tm.phase!=='play')tm={phase:'play',count:-1,time:m.time};              // サーバーが始めたら必ず始める
    else if(m.phase==='count'&&tm.phase==='count'&&m.count<tm.count)tm={...tm,count:m.count};  // サーバーの方が先なら数字を合わせる
    if(tm.phase==='play'&&prev.phase==='count'&&prev.rn===m.rn&&prev.count!==0)nxSE('go');
-   set({...prev,pred:0,rmP:!!m.pRm,rmD:!!m.dRm,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
+   set({...prev,pred:0,rmP:!!m.pRm,rmD:!!m.dRm,dcP:m.pDc|0,dcD:m.dDc|0,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
    if(ev){
     if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);else if(ev.se==='remove'&&!mine)nxSE('remove',ev.who);
     else if(ev.se==='play'){if(!mine)nxSE('play',ev.who);if(ev.who==='p')setBounce(0);
@@ -503,7 +507,8 @@ function NextMode({onBack}){
  function predict(a){const s=sR.current;if(s.phase!=='play')return;const v=s.pQ[0];
   if(a==='play'){if(!nxLegal(v,s.field)){setBounce(n=>n+1);nxSE('reject');return;}
    set({...s,pred:1,field:[...s.field,v],by:[...s.by,'p'],pQ:s.pQ.slice(1),pSerial:s.pSerial+1});setBounce(0);nxSE('play','p');}
-  else{set({...s,pred:1,pQ:s.pQ.slice(1),pSerial:s.pSerial+1});nxSE('discard','p');}
+  else{if((s.dcP|0)>=NX_CFG.discardMax){setBounce(n=>n+1);nxSE('reject');return;} // 捨てるのは1ラウンド discardMax 枚まで
+   set({...s,pred:1,dcP:(s.dcP|0)+1,pQ:s.pQ.slice(1),pSerial:s.pSerial+1});nxSE('discard','p');}
   meter.current.pend.push(performance.now());if(meter.current.pend.length>8)meter.current.pend.shift(); // 送った時刻
   if(!wsSend({type:'nxAct',a}))resume();}
  function predictRemove(i){const s=sR.current;if(s.phase!=='play'||s.rmP||i<0||i>=s.field.length)return;
@@ -514,7 +519,7 @@ function NextMode({onBack}){
  const cancelLobby=()=>{wsSend({type:'nxLeave'});sess.current=null;setLobby(null);};
  function startRound(base,rn){
   const my=++tok.current;clearAll();let c=NX_CFG.countFrom;
-  set({...base,phase:'count',rn,field:[],by:[],seg:0,rmP:false,rmD:false,count:c,time:nxRoundSec(),msg:null});
+  set({...base,phase:'count',rn,field:[],by:[],seg:0,rmP:false,rmD:false,dcP:0,dcD:0,count:c,time:nxRoundSec(),msg:null});
   const tick=()=>{if(my!==tok.current)return;c--;
    if(c>0){set({...sR.current,count:c});at(NX_CFG.countStepMs,tick);return;}
    set({...sR.current,count:0});nxSE('go');
@@ -580,8 +585,9 @@ function NextMode({onBack}){
   if(onl.current){if(who==='p')predictRemove(i);return false;}
   if(!active()||s[key]||i<0||i>=s.field.length)return false;
   set({...s,[key]:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('remove',who);return true;}
- function discard(who){if(onl.current){if(who==='p')predict('discard');return false;}if(!active())return false;const s=sR.current,key=who==='p'?'pQ':'dQ',serial=who==='p'?'pSerial':'dSerial';
-  if(who==='p')setBounce(0);const n={...s,[key]:nxDraw(s[key].slice(1)),[serial]:s[serial]+1};
+ function discard(who){if(onl.current){if(who==='p')predict('discard');return false;}if(!active())return false;const s=sR.current,key=who==='p'?'pQ':'dQ',serial=who==='p'?'pSerial':'dSerial',dk=who==='p'?'dcP':'dcD';
+  if(tutR.current<0&&(s[dk]|0)>=NX_CFG.discardMax){if(who==='p'){setBounce(n=>n+1);nxSE('reject');}return false;} // 捨てるのは1ラウンド discardMax 枚まで
+  if(who==='p')setBounce(0);const n={...s,[dk]:(s[dk]|0)+1,[key]:nxDraw(s[key].slice(1)),[serial]:s[serial]+1};
   if(NX_CFG.pushDiscard){const ok=who==='p'?'dQ':'pQ',os=who==='p'?'dSerial':'pSerial';n[ok]=[s[key][0],...s[ok]].slice(0,NX_CFG.queueN+8);n[os]=s[os]+1;} // v332: 相手の先頭へ
   set(n);nxSE('discard',who);return true;
  }
@@ -599,15 +605,16 @@ function NextMode({onBack}){
   const step=()=>{if(!alive||sR.current.phase!=='play')return;
    if(NX_CFG.stairs){stairAI(ai);t=setTimeout(step,ai.delay+Math.random()*ai.jitter);return;}
    const s=sR.current,fs=s.field.reduce((a,b)=>a+b,0),v=s.dQ[0],pv=s.pQ[0],ok=nxLegal(v,s.field);
+   const disc=()=>{if(!discard('d')&&ok)play('d');}; // 捨てる上限なら出す（出せなければ待つ）
    const givesTen=ok&&nxLegal(pv,[...s.field,v])&&fs+v+pv===10;
    const threatened=nxLegal(pv,s.field)&&fs+pv===10;
    if(NX_CFG.remove&&!s.rmD&&!(ok&&fs+v===10)&&Math.random()<ai.read){const i=nxAiRemove(s.field,v,pv);if(i>=0&&removeAt('d',i)){t=setTimeout(step,ai.delay+Math.random()*ai.jitter);return;}}
    if(ok&&fs+v===10)play('d');
-   else if(NX_CFG.pushDiscard&&threatened&&Math.random()<ai.read)discard('d'); // v332: 押しつけてこっちの10をつぶす
-   else if(nxLegal(s.dQ[1],s.field)&&fs+s.dQ[1]===10&&Math.random()<ai.read)discard('d');
+   else if(NX_CFG.pushDiscard&&threatened&&Math.random()<ai.read)disc(); // v332: 押しつけてこっちの10をつぶす
+   else if(nxLegal(s.dQ[1],s.field)&&fs+s.dQ[1]===10&&Math.random()<ai.read)disc();
    else if(ok&&threatened&&!givesTen&&Math.random()<ai.read)play('d');
    else if(ok&&(!givesTen||Math.random()>ai.read)&&Math.random()<ai.safe)play('d');
-   else discard('d');
+   else disc();
    t=setTimeout(step,ai.delay+Math.random()*ai.jitter);};
   t=setTimeout(step,ai.delay);return()=>{alive=false;clearTimeout(t);};},[st.phase,level,online,tut]);
  // ── チュートリアル（あそびかた）：時計は止め、相手は動かさず、決めた札で1つずつ試してもらう
@@ -620,7 +627,7 @@ function NextMode({onBack}){
   ['⑤ 役で点が増える','10を作った時の札で、点が変わります。\n・役なし 1点\n・同じ数字2枚（ペア） 2点\n・ペアが2組（ツーペア） 3点\n・同じ数字3枚（スリーカード） 4点\n・1・2・3・4 の4枚（ストレート） 5点'],
   ['⑥ これで準備OK','先に20点取った方の勝ちです。\n1ラウンドは20秒。時間切れは得点なしです。\nまずは「やさしい」相手と遊んでみましょう。']];
  function tutGo(n){const c=sR.current;++tok.current;clearAll();deadline.current=Infinity;setTut(n);
-  const base={...c,phase:'play',count:-1,time:nxRoundSec(),msg:null,rmP:false,rmD:false,pPt:n>=3?c.pPt:0,dPt:0,pSerial:c.pSerial+1,dSerial:c.dSerial+1};
+  const base={...c,phase:'play',count:-1,time:nxRoundSec(),msg:null,rmP:false,rmD:false,dcP:0,dcD:0,pPt:n>=3?c.pPt:0,dPt:0,pSerial:c.pSerial+1,dSerial:c.dSerial+1};
   if(n===0||n===1)set({...base,field:[],by:[],pQ:[3,1,4,2,5,3],dQ:[2,4,1,3,5,2]});
   else if(n===2)set({...base,field:[3,2],by:['p','d'],pQ:[5,1,4,2,3,1],dQ:[4,1,3,5,2,4]});
   else if(n===3)set({...base,field:[4,3],by:['d','p'],pQ:[4,1,3,2,5,1],dQ:[1,2,5,3,4,2]});
@@ -667,7 +674,8 @@ function NextMode({onBack}){
     h('span',{className:'nx-left'},h('small',null,'あと'),h(NxNumber,{value:Math.max(0,tgt-fs)}))),
    NX_CFG.stairs&&trapNext?h('div',{className:'nx-trap','aria-label':'地雷 '+trapNext},'💣'+trapNext):null),
   queue('p'),
-  h('div',{ref:trashRef,className:'nx-action discard nx-trash','aria-label':'トラッシュ（札をここへ引っぱると捨てる）'}),
+  h('div',{ref:trashRef,className:'nx-action discard nx-trash'+(tut<0&&(st.dcP|0)>=NX_CFG.discardMax?' nx-trash-empty':''),'aria-label':'トラッシュ（札をここへ引っぱると捨てる）'},
+   tut<0&&h('span',{className:'nx-dc-left','aria-label':'捨てられる残り '+Math.max(0,NX_CFG.discardMax-(st.dcP|0))+' 枚'},h(NxNumber,{value:Math.max(0,NX_CFG.discardMax-(st.dcP|0))}))),
   online&&netNote&&h('div',{className:'nx-net-note',role:'status'},netNote),
   tut>=0&&h('div',{className:'nx-tut'+(tut===0||tut>=5?' big':''),role:'dialog','aria-label':TUT_TEXT[tut][0]},
    h('h2',null,TUT_TEXT[tut][0]),
