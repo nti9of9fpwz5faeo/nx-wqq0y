@@ -110,7 +110,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v14'; // オンライン中に「通信」「描画」の時間を測って表示（原因調べ用）
+const APP_VER='v15'; // 計測を自動でサーバーに記録（相手の札が画面に出るまで・自分の操作が届くまで）
+// const APP_VER='v14'; // オンライン中に「通信」「描画」の時間を測って表示（原因調べ用）
 // const APP_VER='v13'; // バージョンをタイトル画面と読み込み画面にはっきり表示
 // const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
 // const APP_VER='v11'; // バージョン表示・自動更新を追加
@@ -241,7 +242,7 @@ function NextMode({onBack}){
  // 時計合わせ：ping の往復で「サーバーの今」を推定（往復が一番短かった回を信用する）
  const clock=useRef({off:0,rtt:1e9,samples:[]});
  const srvNow=()=>Date.now()+clock.current.off;
- const meter=useRef({rtt:[],draw:[],recv:0}),[meterText,setMeterText]=useState('');
+ const meter=useRef({rtt:[],draw:[],recv:0,oppAt:0,deliv:[],acks:[],pend:[]}),[meterText,setMeterText]=useState('');
  function onPong(m){if(!m.s||!m.t)return;const now=Date.now(),rtt=now-m.t,c=clock.current;meter.current.rtt.push(rtt);if(meter.current.rtt.length>10)meter.current.rtt.shift();
   c.samples.push({rtt,off:m.s+rtt/2-now});if(c.samples.length>12)c.samples.shift();
   const best=c.samples.reduce((a,b)=>b.rtt<a.rtt?b:a);c.off=best.off;c.rtt=best.rtt;}
@@ -283,10 +284,17 @@ function NextMode({onBack}){
  useEffect(()=>{window.__nxBusy=online;},[online]);
  // 描画の時間：状態を受け取ってから、画面に描き終わる（次のフレームが来る）まで
  useEffect(()=>{const M=meter.current;if(!M.recv)return;const t0=M.recv;M.recv=0;
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{M.draw.push(performance.now()-t0);if(M.draw.length>20)M.draw.shift();}));});
+  const oppAt=M.oppAt;M.oppAt=0;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{M.draw.push(performance.now()-t0);if(M.draw.length>20)M.draw.shift();
+   if(oppAt)M.deliv.push(Math.round(srvNow()-oppAt));}));});
  useEffect(()=>{if(!online){setMeterText('');return;}const iv=setInterval(()=>{const M=meter.current;
   const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0,max=a=>a.length?Math.round(Math.max(...a)):0;
-  setMeterText('通信 '+avg(M.rtt)+'ms（最大'+max(M.rtt)+'）　描画 '+avg(M.draw)+'ms（最大'+max(M.draw)+'）');},1000);return()=>clearInterval(iv);},[online]);
+  setMeterText('通信 '+avg(M.rtt)+'ms（最大'+max(M.rtt)+'）　描画 '+avg(M.draw)+'ms（最大'+max(M.draw)+'）');},1000);
+  // 自動記録：5秒ごとに測った数字をサーバーへ（サーバーが貯めて、あとで Claude が読む）
+  const dev=(navigator.userAgent.match(/\(([^)]*)\)/)||['',''])[1]+' '+screen.width+'x'+screen.height+'@'+(window.devicePixelRatio||1);
+  const st5=setInterval(()=>{const M=meter.current;const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+   wsSend({type:'nxStat',ver:APP_VER,dev,rtt:avg(M.rtt),draw:avg(M.draw),recv:M.deliv.splice(0),ack:M.acks.splice(0),off:Math.round(clock.current.off),n:clock.current.samples.length});},5000);
+  return()=>{clearInterval(iv);clearInterval(st5);};},[online]);
  useEffect(()=>{if(!online)return;
   const iv=setInterval(()=>{const gap=Date.now()-lastMsg.current;
    if(retry.current)return;
@@ -317,6 +325,9 @@ function NextMode({onBack}){
   else if(m.type==='nxOpLeft'){gone('相手が退出しました');}
   else if(m.type==='nxState'){
    meter.current.recv=performance.now(); // 受け取った時刻（描き終わるまでを測る）
+   {const e=m.ev,M=meter.current;if(e&&e.at&&(e.se==='play'||e.se==='discard')){
+     if(e.who==='d')M.oppAt=e.at;                                   // 相手の操作：サーバーが受けた時刻 → 画面に出るまでを測る
+     else{const now=performance.now();while(M.pend.length&&now-M.pend[0]>3000)M.pend.shift();if(M.pend.length)M.acks.push(Math.round(now-M.pend.shift()));}}} // 自分の操作：押してから返事まで（3秒以上前の押し間違いは捨てる）
    if(m.seq&&m.seq<lastSeq.current)return;if(m.seq)lastSeq.current=m.seq;
    const prev=sR.current,msg=m.msg?{...m.msg,landed:prev.msg&&prev.msg.k===m.msg.k?prev.msg.landed:false}:null,ev=m.ev;
    const mine=ev&&ev.who==='p'&&(ev.se==='play'||ev.se==='discard')&&prev.pred; // 自分の操作は先に鳴らしてある
@@ -340,6 +351,7 @@ function NextMode({onBack}){
   if(a==='play'){if(!nxLegal(v,s.field)){setBounce(n=>n+1);nxSE('reject');return;}
    set({...s,pred:1,field:[...s.field,v],by:[...s.by,'p'],pQ:s.pQ.slice(1),pSerial:s.pSerial+1});setBounce(0);nxSE('play','p');}
   else{set({...s,pred:1,pQ:s.pQ.slice(1),pSerial:s.pSerial+1});nxSE('discard','p');}
+  meter.current.pend.push(performance.now());if(meter.current.pend.length>8)meter.current.pend.shift(); // 送った時刻
   if(!wsSend({type:'nxAct',a}))resume();}
  const makeRoom=()=>connect(()=>wsSend({type:'nxCreate'}));
  const joinRoom=()=>{const c=code.replace(/\D/g,'');if(c.length!==4){setLobby({step:'join',err:'4けたの番号を入れてください'});return;}connect(()=>wsSend({type:'nxJoin',code:c}));};
