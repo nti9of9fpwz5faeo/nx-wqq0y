@@ -164,7 +164,9 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v28'; // 実況を英語に。10完成・逆転・リーチ・決着の時だけセリフを文字でも出す（ラウンド中は出さない）
+const APP_VER='v29'; // 場の札を消した時の音（はさみ）
+// const APP_VER='v29'; // 英語の実況が確実に鳴るように（フォルダ名変更）＋場の札を消した時の音
+// const APP_VER='v28'; // 実況を英語に。10完成・逆転・リーチ・決着の時だけセリフを文字でも出す（ラウンド中は出さない）
 // const APP_VER='v27'; // BGM（Card Battle Riff）を対戦中ループ。タイトルで音楽オンオフ
 // const APP_VER='v26'; // 札を元に戻す（左上の角タブ）。v25の青赤の札は img/next-v2/card-p,d に残してある
 // const APP_VER='v25'; // 札の絵を青・赤の新しい札に（角タブ廃止）
@@ -250,13 +252,13 @@ function nxPrepareAudio(){
   try{const r=await fetch('se/next-v320/'+file+'.mp3');if(!r.ok)throw Error('audio '+r.status);NX_AUDIO.buffers[kind]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){/* A fresh, short local tone handles unavailable audio without a late replay. */}
  })).finally(()=>{NX_AUDIO.pending=null;});return NX_AUDIO.pending;
 }
-// v24 実況の声：se/jikkyo/*.mp3。NX_CFG.voice:false で全部止まる。音量は NX_CFG.voiceVol
+// v24 実況の声：se/jikkyo-en/*.mp3（v29でフォルダ名変更＝前の日本語が残らないように）。NX_CFG.voice:false で全部止まる。音量は NX_CFG.voiceVol
 const NX_JK={buf:{},last:{},src:null,at:0,pending:null};
 // v28 英語の実況。セリフの文字（ラウンド中は出さない・おまけ程度）
 const NX_JK_TEXT={'ten-1':'NICE ONE!','ten-2':'PERFECT TEN!','rev-1':'WHAT A COMEBACK!','rev-2':'THE LEAD HAS CHANGED!','reach-1':'MATCH POINT!','reach-2':'ONE MORE TO WIN!','end-1':'GAME OVER!','end-2':"AND THAT'S THE MATCH!"};
 const NX_JK_FILES=['ten-1','ten-2','last-1','last-2','rev-1','rev-2','reach-1','reach-2','end-1','end-2'];
 function nxPrepareVoice(){if(!NX_CFG.voice||NX_JK.pending)return NX_JK.pending;
- NX_JK.pending=Promise.all(NX_JK_FILES.map(async f=>{if(NX_JK.buf[f])return;try{const r=await fetch('se/jikkyo/'+f+'.mp3');if(r.ok)NX_JK.buf[f]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){}})).finally(()=>{NX_JK.pending=null;});return NX_JK.pending;}
+ NX_JK.pending=Promise.all(NX_JK_FILES.map(async f=>{if(NX_JK.buf[f])return;try{const r=await fetch('se/jikkyo-en/'+f+'.mp3');if(r.ok)NX_JK.buf[f]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){}})).finally(()=>{NX_JK.pending=null;});return NX_JK.pending;}
 // kind: ten / last / rev / reach / end。しゃべり中は重ねない（end だけは割り込む）。同じ言い方を続けない
 function nxVoice(kind,force=false){try{if(!NX_CFG.voice)return;const now=performance.now();
  if(NX_JK.src&&!force)return;if(!force&&now-NX_JK.at<900)return;
@@ -291,7 +293,19 @@ function nxTone(f,{delay=0,d=.12,v=.1,type='sine'}={}){
  gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(v,at+.003);gain.gain.exponentialRampToValueAtTime(.0001,at+d);
  source.connect(gain);gain.connect(nxAudioBus());nxTrackVoice(source,gain);source.start(at);source.stop(at+d+.015);
 }
+// v29 場の札を消した音（合成）：はさみ「シャキッ」×2 → 抜ける「ヒュッ」
+function nxNoise(delay,d,v,freq){const at=AC.currentTime+delay,n=Math.floor(AC.sampleRate*d),b=AC.createBuffer(1,n,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+ const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();src.buffer=b;f.type='bandpass';f.frequency.value=freq;f.Q.value=1.4;g.gain.value=v;src.connect(f);f.connect(g);g.connect(nxAudioBus());nxTrackVoice(src,g);src.start(at);}
+function nxSweep(delay,f0,f1,d,v){const at=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.setValueAtTime(f0,at);o.frequency.exponentialRampToValueAtTime(f1,at+d);
+ g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(v,at+.01);g.gain.exponentialRampToValueAtTime(.0001,at+d);o.connect(g);g.connect(nxAudioBus());nxTrackVoice(o,g);o.start(at);o.stop(at+d+.02);}
+function nxRemoveSE(own){nxNoise(0,.07,.55*own,5200);nxNoise(.075,.09,.6*own,4200);nxSweep(.12,900,240,.16,.12*own);}
+// v29 はさみの「シャキッ」：短いノイズを高音だけ残して鳴らす
+function nxSnip(delay,own){const at=AC.currentTime+delay,len=Math.floor(AC.sampleRate*.05),buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);
+ for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
+ const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();src.buffer=buf;f.type='highpass';f.frequency.value=3500;g.gain.value=.35*own;
+ src.connect(f);f.connect(g);g.connect(nxAudioBus());nxTrackVoice(src,g);src.start(at);}
 function nxSE(kind,who='p',points=1){
+ if(kind==='remove'){try{resumeAC();nxRemoveSE(who==='p'?1:.6);}catch(e){}return;}
  try{resumeAC();const own=who==='p'?1:.48,buffer=NX_AUDIO.buffers[kind];
   if(buffer){const source=AC.createBufferSource(),gain=AC.createGain();source.buffer=buffer;
    source.playbackRate.value=kind==='complete'?(points>=4?1:points>=2?1.06:1.14):(who==='p'?1:.94);
@@ -304,6 +318,7 @@ function nxSE(kind,who='p',points=1){
   else if(kind==='score'){[659.25,783.99,1046.5].slice(0,points>=4?3:2).forEach((f,i)=>nxTone(f,{delay:i*.032,d:.09,v:.055*own}));}
   else if(kind==='go'){nxTone(392,{d:.095,v:.1});nxTone(587.33,{delay:.045,d:.12,v:.08});}
   else if(kind==='timeout'){nxTone(293.66,{d:.11,v:.07});nxTone(220,{delay:.1,d:.16,v:.06});}
+  else if(kind==='remove'){nxSnip(0,own);nxSnip(.07,own);nxTone(880,{delay:.13,d:.09,v:.07*own,type:'triangle'});nxTone(1320,{delay:.16,d:.08,v:.04*own});}
   else if(kind==='reject')nxTone(180,{d:.07,v:.08});
   else if(kind==='victory'){[523.25,659.25,783.99,1046.5].forEach((f,i)=>nxTone(f,{delay:i*.065,d:.28,v:.065}));}
  }catch(e){}
@@ -472,7 +487,7 @@ function NextMode({onBack}){
    if(tm.phase==='play'&&prev.phase==='count'&&prev.rn===m.rn&&prev.count!==0)nxSE('go');
    set({...prev,pred:0,rmP:!!m.pRm,rmD:!!m.dRm,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
    if(ev){
-    if(ev.se==='timeout')nxSE('timeout');else if((ev.se==='discard'||ev.se==='remove')&&!mine)nxSE('discard',ev.who);
+    if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);else if(ev.se==='remove'&&!mine)nxSE('remove',ev.who);
     else if(ev.se==='play'){if(!mine)nxSE('play',ev.who);if(ev.who==='p')setBounce(0);
      if(ev.done){const my=tok.current,k=msg&&msg.k;at(100,()=>{if(my===tok.current)nxSE('complete',ev.who,ev.done);});
       at(830,()=>{const c=sR.current;if(my!==tok.current||!c.msg||c.msg.k!==k)return;set({...c,msg:{...c.msg,landed:true}});nxSE('score',ev.who,ev.done);});}}}
@@ -487,7 +502,7 @@ function NextMode({onBack}){
   meter.current.pend.push(performance.now());if(meter.current.pend.length>8)meter.current.pend.shift(); // 送った時刻
   if(!wsSend({type:'nxAct',a}))resume();}
  function predictRemove(i){const s=sR.current;if(s.phase!=='play'||s.rmP||i<0||i>=s.field.length)return;
-  set({...s,pred:1,rmP:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('discard','p');
+  set({...s,pred:1,rmP:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('remove','p');
   meter.current.pend.push(performance.now());if(!wsSend({type:'nxAct',a:'remove',i}))resume();}
  const makeRoom=()=>connect(()=>wsSend({type:'nxCreate'}));
  const joinRoom=()=>{const c=code.replace(/\D/g,'');if(c.length!==4){setLobby({step:'join',err:'4けたの番号を入れてください'});return;}connect(()=>wsSend({type:'nxJoin',code:c}));};
@@ -559,7 +574,7 @@ function NextMode({onBack}){
   if(!NX_CFG.remove)return false;const s=sR.current,key=who==='p'?'rmP':'rmD';
   if(onl.current){if(who==='p')predictRemove(i);return false;}
   if(!active()||s[key]||i<0||i>=s.field.length)return false;
-  set({...s,[key]:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('discard',who);return true;}
+  set({...s,[key]:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('remove',who);return true;}
  function discard(who){if(onl.current){if(who==='p')predict('discard');return false;}if(!active())return false;const s=sR.current,key=who==='p'?'pQ':'dQ',serial=who==='p'?'pSerial':'dSerial';
   if(who==='p')setBounce(0);const n={...s,[key]:nxDraw(s[key].slice(1)),[serial]:s[serial]+1};
   if(NX_CFG.pushDiscard){const ok=who==='p'?'dQ':'pQ',os=who==='p'?'dSerial':'pSerial';n[ok]=[s[key][0],...s[ok]].slice(0,NX_CFG.queueN+8);n[os]=s[os]+1;} // v332: 相手の先頭へ
