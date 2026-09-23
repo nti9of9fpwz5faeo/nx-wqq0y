@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "reference_canvas": [
+    941,
+    1672
+  ],
+  "units": "normalized 0..1; anchors are center",
+  "background": {
+    "file": "background/arena_background.png",
+    "fit": "cover"
+  },
+  "card": {
+    "size_px": [
+      600,
+      840
+    ],
+    "aspect": 0.7142857142857143,
+    "width_relative_to_screen": 0.202,
+    "corner_indices": "upper-left upright, lower-right rotated 180deg"
+  },
+  "scoreboard": {
+    "file": "ui/scoreboard_base.png",
+    "center": [
+      0.5,
+      0.121
+    ],
+    "width": 0.774,
+    "height": 0.077,
+    "blue_text_anchor": [
+      0.225,
+      0.6
+    ],
+    "red_text_anchor": [
+      0.75,
+      0.6
+    ],
+    "text_color": "#FFFFFF"
+  },
+  "opponent_queue": {
+    "center": [
+      0.5,
+      0.277
+    ],
+    "color": "red"
+  },
+  "field": {
+    "center_y": 0.501,
+    "card_center_x": [
+      0.167,
+      0.391,
+      0.613,
+      0.837
+    ]
+  },
+  "sum": {
+    "file": "ui/sum_base.png",
+    "center": [
+      0.5,
+      0.396
+    ],
+    "width": 0.195,
+    "height": 0.037
+  },
+  "player_queue": {
+    "center": [
+      0.5,
+      0.711
+    ],
+    "color": "blue"
+  },
+  "timer": {
+    "file": "ui/timer_base.png",
+    "center": [
+      0.87,
+      0.637
+    ],
+    "width": 0.166,
+    "aspect": 1,
+    "dial_center_px": [
+      256,
+      298
+    ],
+    "progress_radius_px": 153,
+    "progress_stroke_px": 20,
+    "progress_color": "#20CEF3",
+    "text_color": "#08265C",
+    "start_angle_deg": -90
+  },
+  "queue_note": "Only the first card is playable. Screen mockup is visual reference; preserve existing queue order in implementation. Optional: first card scale=1, second/third=0.8; not mandatory in approved preview."
+}

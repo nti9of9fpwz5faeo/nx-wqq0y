@@ -2,63 +2,45 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>NEXT</title>
+<link rel="preload" as="image" href="img/next/arena_background.webp">
 <style>
 @font-face{font-family:Lilita;src:url(fonts/LilitaOne-Regular.ttf)}
-:root{--blue:#2f7fe0;--blue-d:#1d5aa8;--red:#e0503a;--red-d:#a83424;--felt:#1f6b45;--felt-d:#154d31;--gold:#ffd24a;--cell:min(8.6vw,40px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{height:100%;background:var(--felt-d);overflow:hidden;font-family:Lilita,system-ui,sans-serif;color:#fff}
-body{background:radial-gradient(ellipse at 50% 45%,#2a8458 0%,var(--felt) 45%,var(--felt-d) 100%);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-#app{position:relative;height:100%;max-width:520px;margin:auto;display:flex;flex-direction:column;align-items:center}
-.hud{width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:22px}
-.pt{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:12px;background:#0003}
-.pt i{width:14px;height:14px;border-radius:4px;display:inline-block}
-.time{font-size:30px;min-width:60px;text-align:center}
-.zone{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.opp{flex:1.1}.mid{flex:1.3}.me{flex:1.4}
-/* ゲージ */
-.gwrap{position:relative;width:calc(var(--cell)*10)}
-.gauge{display:flex;gap:0;padding:4px;border-radius:12px;background:#0d3a24;box-shadow:inset 0 3px 8px #0008,0 2px 0 #fff2;width:calc(var(--cell)*10 + 8px);margin-left:-4px}
-.c{width:var(--cell);height:var(--cell);border-radius:6px;border:2px dashed #ffffff30;margin:0}
-.c.b{background:var(--blue);border:2px solid var(--blue-d)}
-.c.r{background:var(--red);border:2px solid var(--red-d)}
-.c.first{position:relative}
-.c.first span{position:absolute;left:3px;top:0;font-size:calc(var(--cell)*.45);color:#fff;text-shadow:0 1px 0 #0006}
-.left{margin-top:8px;font-size:18px;opacity:.85;text-align:center}
-.left b{font-size:26px;color:var(--gold)}
-/* 次の札ブロック */
-.blk{position:absolute;display:flex;transition:left .12s}
-.blk .c{border-style:solid}
-.blk.me .c{background:var(--blue);border-color:#fff}
-.blk.op .c{background:var(--red);border-color:#fff}
-.blk .c.over{background:#0000;border:2px dashed #ff8a7a}
-.blk.fit .c{box-shadow:0 0 14px var(--gold);border-color:var(--gold)}
-.blk.ng{opacity:.4}
-.blk .num{position:absolute;right:-34px;top:50%;transform:translateY(-50%);font-size:calc(var(--cell)*.8);text-shadow:0 2px 0 #0006}
-.lane{position:relative;height:calc(var(--cell)*1.1);width:calc(var(--cell)*10)}
-.small{display:flex;gap:6px;margin-top:6px;opacity:.75;font-size:15px;align-items:center}
-.small .mini{display:flex}
-.small .mini i{width:9px;height:9px;border-radius:2px;margin-right:1px;display:block}
-.me .mini i{background:var(--blue)}.opp .mini i{background:var(--red)}
-.btns{width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 18px 18px;gap:40px}
-.btn{border:none;border-radius:16px;font-family:inherit;color:#fff;font-size:22px;box-shadow:0 5px 0 #0006}
-.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #0006}
-.btn.dis{background:#6d5a44;width:30%;height:56px;font-size:18px}
-.btn.play{background:var(--blue);width:52%;height:76px;font-size:28px}
-.btn[disabled]{filter:grayscale(.7) brightness(.8)}
-.tag{font-size:11px;opacity:.6;display:block}
-.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0008;z-index:5;text-align:center;padding:20px}
-.overlay h1{font-size:44px}.overlay p{font-size:16px;line-height:1.7;opacity:.9;font-family:system-ui,sans-serif}
-.overlay .btn{background:var(--blue);width:220px;height:58px}
-.lv{display:flex;gap:10px}.lv .btn{width:auto;padding:0 16px;height:50px;background:#355}
-.lv .btn.on{background:var(--blue)}
-.big{position:absolute;left:0;right:0;top:25%;text-align:center;font-size:64px;text-shadow:0 4px 0 #0007;pointer-events:none;z-index:4}
-.msg{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:34px;pointer-events:none;z-index:4;text-shadow:0 3px 0 #0008}
-.msg.p{color:#9fd0ff}.msg.d{color:#ffb3a6}
+html,body{height:100%;overflow:hidden;background:#0b3fb0 url(img/next/arena_background.webp) center/cover no-repeat;font-family:Lilita,"Arial Rounded MT Bold",system-ui,sans-serif;color:#fff}
+body{display:grid;place-items:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+/* 画面は9:16の箱。座標は layout.json の比率（中心基準） */
+#app{position:relative;width:min(100vw,56.25dvh);aspect-ratio:9/16;max-height:100%;container-type:inline-size} /* 背景は body に1枚だけ（箱にも敷くと継ぎ目が出る） */
+.L{position:absolute;transform:translate(-50%,-50%)}
+.score{left:50%;top:12.1%;width:77.4%;height:7.7%;background:url(img/next/scoreboard_base.webp) center/100% 100% no-repeat}
+.score span{position:absolute;top:60%;transform:translate(-50%,-50%);font-size:6.3cqw;white-space:nowrap;color:#fff}
+.score small{font-size:2.6cqw;margin-left:.6cqw}
+.score .blue{left:22.5%}.score .red{left:75%}
+.sum{left:50%;top:39.6%;width:19.5%;height:3.7%;background:url(img/next/sum_base.webp) center/100% 100% no-repeat;display:grid;place-items:center;font-size:3.9cqw;color:#fff}
+.card,.slot{position:absolute;width:20.2%;aspect-ratio:5/7;transform:translate(-50%,-50%) scale(var(--sc,1))}
+.card{filter:drop-shadow(0 .35cqw .45cqw #002b6455);transition:left .12s}
+.timer{left:87%;top:63.7%;width:16.6%;aspect-ratio:1}
+.timer img,.timer svg{position:absolute;inset:0;width:100%;height:100%}
+.timer text{font-family:Lilita,"Arial Rounded MT Bold",sans-serif}
+.btns{position:absolute;left:0;right:0;top:84%;display:flex;justify-content:space-between;align-items:center;padding:0 6%;gap:10%}
+.btn{border:none;border-radius:3.5cqw;font-family:inherit;color:#fff;box-shadow:0 1.2cqw 0 #0005}
+.btn:active{transform:translateY(.8cqw);box-shadow:0 .4cqw 0 #0005}
+.btn.dis{background:#5b6f95;width:32%;height:13cqw;font-size:4.6cqw}
+.btn.play{background:#1f6fe0;width:52%;height:17cqw;font-size:6.6cqw}
+.btn[disabled]{filter:grayscale(.6) brightness(.8)}
+.tag{font-size:2.6cqw;opacity:.6;display:block}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4cqw;background:#0a1c4acc;z-index:5;text-align:center;padding:6cqw}
+.overlay h1{font-size:12cqw}.overlay p{font-size:4cqw;line-height:1.7;opacity:.9;font-family:system-ui,sans-serif}
+.overlay .btn{background:#1f6fe0;width:56cqw;height:14cqw;font-size:5.4cqw}
+.lv{display:flex;gap:2.5cqw}.lv .btn{width:auto!important;padding:0 4cqw;height:12cqw!important;background:#3b4f7a!important;font-size:4.4cqw!important}
+.lv .btn.on{background:#1f6fe0!important}
+.big{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:20cqw;text-shadow:0 1cqw 0 #0006;pointer-events:none;z-index:4}
+.msg{position:absolute;left:0;right:0;top:39.6%;transform:translateY(-50%);text-align:center;font-size:8cqw;pointer-events:none;z-index:4;text-shadow:0 .8cqw 0 #0008}
+.msg.p{color:#bfe3ff}.msg.d{color:#ffc9bf}
 </style></head>
 <body><div id="app"></div>
 <script>
-// NEXT オンライン版の試作：場を「10マスのゲージ」で見せる（くるみ案 9/23）
-// ボタンは仮（画像はくるみが後で用意）。数値は CFG に集約
+// NEXT オンライン版の試作：くるみ提供の素材 tenkuru-next-assets（青いアリーナ・UNO風の札・スコア枠・時計・合計枠・空き枠）
+// ルールは本体のネクストと同じ。ボタンは仮（画像はくるみが後で用意）。数値は CFG / LAY に集約
 const CFG={winPt:10,roundSec:10,countFrom:5,countStepMs:650,goMs:500,holdMs:1500,timeUpMs:1200,queueN:3};
 const AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 // ── ルール（本体のネクストと同じ。canPlay・calcPts は本体からそのまま）
@@ -112,25 +94,29 @@ function aiStep(){const ai=AI[S.level];aiT=setTimeout(()=>{if(S.phase!=='play')r
   else if(ok&&Math.random()<ai.safe)play('d');
   else discard('d');
   aiStep();},ai.delay+Math.random()*ai.jitter);}
-// ── 画面
+// ── 画面（配置は img/next/src/layout.json の初期値）
+const LAY={qStep:14.8,qX:[35.8,50.6,65.4],oppY:27.7,meY:71.1,fieldY:50.1,fieldX:[16.7,39.1,61.3,83.7],qScale:[1,1,1],
+  timer:{cx:256,cy:298,r:153,w:20,color:'#20CEF3',text:'#08265C'}}; // qScale：後で [1,.8,.8] にすれば先頭以外を縮小できる
 const $=s=>document.querySelector(s);
-function cells(f){let h='',i=0;f.forEach(x=>{for(let k=0;k<x.v;k++,i++)h+=`<div class="c ${x.who==='p'?'b':'r'}${k===0?' first':''}">${k===0?'<span>'+x.v+'</span>':''}</div>`;});for(;i<10;i++)h+='<div class="c"></div>';return h;}
-function block(v,who){const fs=sum(S.field),ok=legal(v,S.field),fit=ok&&fs+v===10;let h='';for(let k=0;k<v;k++)h+=`<div class="c${fs+k>=10?' over':''}${k===0?' first':''}">${k===0?'<span>'+v+'</span>':''}</div>`;
-  return `<div class="blk ${who}${fit?' fit':''}${!ok&&fs+v<=10?' ng':''}" style="left:calc(var(--cell)*${Math.min(fs,10)})">${h}</div>`;}
-function minis(q){return q.slice(1,CFG.queueN).map(v=>`<span class="mini">${'<i></i>'.repeat(v)}</span>`).join('');}
+const cardImg=(v,who,x,y,sc=1,z=0)=>`<img class="card" src="img/next/${who==='p'?'blue':'red'}_${v}.webp" alt="${v}" draggable="false" style="left:${x}%;top:${y}%;--sc:${sc};z-index:${z}">`;
+function queue(q,who,y){return q.slice(0,CFG.queueN).map((v,i)=>cardImg(v,who,LAY.qX[i],y,LAY.qScale[i],i+1)).join('');} // 先頭＝左（本体と同じ）。後ろの札ほど上に重ねて左上の数字を隠さない
+function field(){return LAY.fieldX.map((x,i)=>{const c=S.field[i];return c?cardImg(c.v,c.who,x,LAY.fieldY):`<img class="slot" src="img/next/field_slot.webp" alt="" draggable="false" style="left:${x}%;top:${LAY.fieldY}%">`;}).join('');}
+function timer(){const T=LAY.timer,p=Math.max(0,Math.min(1,S.time/CFG.roundSec)),C=2*Math.PI*T.r;
+  return `<div class="L timer"><img src="img/next/timer_base.webp" alt="" draggable="false"><svg viewBox="0 0 512 512">${p>0?`<circle cx="${T.cx}" cy="${T.cy}" r="${T.r}" fill="none" stroke="${T.color}" stroke-width="${T.w}" stroke-linecap="round" stroke-dasharray="${(C*p).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 ${T.cx} ${T.cy})"/>`:''}<text x="${T.cx}" y="${T.cy+4}" dominant-baseline="middle" text-anchor="middle" fill="${T.text}" font-size="132">${String(Math.ceil(S.time)).padStart(2,'0')}</text></svg></div>`;}
 function render(){const a=$('#app');
-  if(S.phase==='title'){a.innerHTML=`<div class="overlay"><h1>NEXT</h1><p>次の札を「だす」か「すてる」。<br>ゲージの空きにぴったりはまれば10！<br>先に${CFG.winPt}点で勝ち。</p><div class="lv">${Object.entries(AI).map(([k,x])=>`<button class="btn ${k===S.level?'on':''}" data-lv="${k}">${x.label}</button>`).join('')}</div><button class="btn" id="st">はじめる</button></div>`;
+  if(S.phase==='title'){a.innerHTML=`<div class="overlay"><h1>NEXT</h1><p>次の札を「だす」か「すてる」。<br>場の合計をぴったり10にしよう。<br>先に${CFG.winPt}点で勝ち。</p><div class="lv">${Object.entries(AI).map(([k,x])=>`<button class="btn ${k===S.level?'on':''}" data-lv="${k}">${x.label}</button>`).join('')}</div><button class="btn" id="st">はじめる</button></div>`;
     a.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.level=b.dataset.lv;render();});$('#st').onclick=start;return;}
   const fs=sum(S.field),live=S.phase==='play';
-  a.innerHTML=`<div class="hud"><div class="pt"><i style="background:var(--red)"></i>${S.dPt}</div><div class="time">${S.time}</div><div class="pt"><i style="background:var(--blue)"></i>${S.pPt}</div></div>
-  <div class="zone opp"><div class="small">${minis(S.dQ)}</div><div class="lane">${block(S.dQ[0],'op')}</div></div>
-  <div class="zone mid"><div class="gwrap"><div class="gauge">${cells(S.field)}</div></div><div class="left">あと <b>${10-fs}</b></div></div>
-  <div class="zone me"><div class="lane">${block(S.pQ[0],'me')}</div><div class="small">${minis(S.pQ)}</div></div>
+  a.innerHTML=`<div class="L score"><span class="blue">${S.pPt}<small>pt</small></span><span class="red">${S.dPt}<small>pt</small></span></div>
+  ${queue(S.dQ,'d',LAY.oppY)}
+  <div class="L sum">${fs} / 10</div>
+  ${field()}
+  ${timer()}
+  ${queue(S.pQ,'p',LAY.meY)}
   <div class="btns"><button class="btn dis" id="bd" ${live?'':'disabled'}>すてる<span class="tag">仮</span></button><button class="btn play" id="bp" ${live&&legal(S.pQ[0],S.field)?'':'disabled'}>だす<span class="tag">仮</span></button></div>
   ${S.big?`<div class="big">${S.big}</div>`:''}${S.msg?`<div class="msg ${S.msg.k}">${S.msg.t}</div>`:''}
-  ${S.phase==='end'?`<div class="overlay"><h1>${S.pPt>=CFG.winPt?'WIN!':'LOSE'}</h1><p>${S.pPt} - ${S.dPt}</p><button class="btn" id="again">もう一度</button><button class="btn" id="home" style="background:#355">もどる</button></div>`:''}`;
+  ${S.phase==='end'?`<div class="overlay"><h1>${S.pPt>=CFG.winPt?'WIN!':'LOSE'}</h1><p>${S.pPt} - ${S.dPt}</p><button class="btn" id="again">もう一度</button><button class="btn" id="home" style="background:#3b4f7a">もどる</button></div>`:''}`;
   $('#bd').onclick=()=>discard('p');$('#bp').onclick=()=>play('p');
-  if(S.phase==='end'){$('#again').onclick=start;$('#home').onclick=()=>{S.phase='title';render();};}
-  if(S.phase==='count')$('.btns').onpointerdown=()=>{};}
+  if(S.phase==='end'){$('#again').onclick=start;$('#home').onclick=()=>{S.phase='title';render();};}}
 render();
 </script></body></html>
