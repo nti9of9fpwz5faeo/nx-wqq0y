@@ -228,12 +228,25 @@ function NextMode({onBack}){
   if(-dy>=NX_GESTURE.flickPx&&-dy>Math.abs(dx)*1.2&&(ms<=NX_GESTURE.flickMs||-dy>=NX_GESTURE.flickPx*2.5)){back();play('p');return;} // 上にはじいた
   back();}                                                                                                   // どちらでもない → 元に戻る
  // ── オンライン（サーバーが正。自分の操作だけ先に画面へ反映して、サーバーの返事で答え合わせ）
+ // 時計合わせ：ping の往復で「サーバーの今」を推定（往復が一番短かった回を信用する）
+ const clock=useRef({off:0,rtt:1e9,samples:[]});
+ const srvNow=()=>Date.now()+clock.current.off;
+ function onPong(m){if(!m.s||!m.t)return;const now=Date.now(),rtt=now-m.t,c=clock.current;
+  c.samples.push({rtt,off:m.s+rtt/2-now});if(c.samples.length>12)c.samples.shift();
+  const best=c.samples.reduce((a,b)=>b.rtt<a.rtt?b:a);c.off=best.off;c.rtt=best.rtt;}
+ function warmClock(){[0,120,240,360,480].forEach(ms=>setTimeout(()=>wsSend({type:'nxPing',t:Date.now()}),ms));}
+ // 予定表（sched）から、今のカウント・残り時間を自分で計算する
+ function timing(sc){const n=srvNow();
+  if(n<sc.t0)return{phase:'count',count:sc.from,time:10};
+  if(n<sc.goAt)return{phase:'count',count:Math.max(1,sc.from-Math.floor((n-sc.t0)/sc.step)),time:10};
+  if(n<sc.playAt)return{phase:'count',count:0,time:10};
+  return{phase:'play',count:-1,time:Math.max(0,Math.ceil((sc.deadline-n)/1000))};}
  const sess=useRef(null),lastMsg=useRef(0),lastSeq=useRef(0),retry=useRef(null),[netNote,setNetNote]=useState('');
  function wsSend(o){const w=net.current;if(w&&w.readyState===1){w.send(JSON.stringify(o));return true;}return false;}
  function openSocket(onOpen,onFail){
   let w;try{w=new WebSocket(NX_SERVER);}catch(e){onFail&&onFail();return;}
   const old=net.current;net.current=w;if(old){old.onclose=null;try{old.close();}catch(e){}}
-  w.onopen=()=>{lastMsg.current=Date.now();onOpen();};
+  w.onopen=()=>{lastMsg.current=Date.now();warmClock();onOpen();};
   w.onerror=()=>{};
   w.onclose=()=>{if(net.current!==w)return;net.current=null;
    if(onl.current&&sess.current){if(!retry.current)resume();} // 対戦中なら自動で復帰を試す（再試行中は下のタイマーに任せる）
@@ -260,10 +273,16 @@ function NextMode({onBack}){
    if(retry.current)return;
    if(gap>6000){try{net.current&&net.current.close();}catch(e){}resume();return;}
    if(gap>2200)wsSend({type:'nxSync'});else wsSend({type:'nxPing',t:Date.now()});},1000);
+  const tk=setInterval(()=>{const c=sR.current;if(!c.sched||(c.phase!=='count'&&c.phase!=='play'))return;
+   if(c.sched.rn!==undefined&&c.sched.rn!==c.rn)return;const tm=timing(c.sched);
+   if(tm.phase===c.phase&&tm.count===c.count&&tm.time===c.time)return;
+   if(tm.count===0&&c.count!==0)nxSE('go');                 // GO の音は各端末が同じ時刻に自分で鳴らす
+   set({...c,...tm});},40);
   const vis=()=>{if(document.visibilityState!=='visible')return;if(retry.current)return;if(!net.current||net.current.readyState!==1)resume();else wsSend({type:'nxSync'});};
   document.addEventListener('visibilitychange',vis);window.addEventListener('online',vis);
-  return()=>{clearInterval(iv);document.removeEventListener('visibilitychange',vis);window.removeEventListener('online',vis);};},[online]);
+  return()=>{clearInterval(iv);clearInterval(tk);document.removeEventListener('visibilitychange',vis);window.removeEventListener('online',vis);};},[online]);
  function onNet(m){
+  if(m.type==='nxPong'){onPong(m);return;}
   if(m.type==='nxRoom'){sess.current={code:m.code,key:m.key,idx:m.idx};setLobby({step:'wait',code:m.code});}
   else if(m.type==='nxJoinFail')setLobby({step:'join',err:'その番号のへやは見つかりませんでした'});
   else if(m.type==='nxStart'){sess.current={code:m.code,key:m.key,idx:m.idx};lastSeq.current=0;retry.current=null;setNetNote('');
@@ -280,9 +299,11 @@ function NextMode({onBack}){
    const prev=sR.current,msg=m.msg?{...m.msg,landed:prev.msg&&prev.msg.k===m.msg.k?prev.msg.landed:false}:null,ev=m.ev;
    const mine=ev&&ev.who==='p'&&(ev.se==='play'||ev.se==='discard')&&prev.pred; // 自分の操作は先に鳴らしてある
    if(m.phase==='count'&&prev.phase!=='count')setRematch(null);
-   set({...prev,pred:0,phase:m.phase,rn:m.rn,count:m.count,time:m.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
+   const tm=m.sched&&(m.phase==='count'||m.phase==='play')?timing(m.sched):{phase:m.phase,count:m.count,time:m.time};
+   if(tm.phase==='play'&&prev.phase==='count'&&prev.rn===m.rn&&prev.count!==0)nxSE('go');
+   set({...prev,pred:0,sched:m.sched,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
    if(ev){
-    if(ev.se==='go')nxSE('go');else if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);
+    if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);
     else if(ev.se==='play'){if(!mine)nxSE('play',ev.who);if(ev.who==='p')setBounce(0);
      if(ev.done){const my=tok.current,k=msg&&msg.k;at(100,()=>{if(my===tok.current)nxSE('complete',ev.who,ev.done);});
       at(830,()=>{const c=sR.current;if(my!==tok.current||!c.msg||c.msg.k!==k)return;set({...c,msg:{...c.msg,landed:true}});nxSE('score',ev.who,ev.done);});}}}
