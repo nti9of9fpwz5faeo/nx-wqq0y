@@ -107,11 +107,44 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-ver-badge{align-self:center;display:inline-block;margin-top:-6px;padding:3px 12px;border-radius:999px;background:#174f92;color:#fff;font:700 13px/1.4 sans-serif;letter-spacing:.04em;}
 .nx-meter{position:absolute;left:50%;top:0.6%;transform:translateX(-50%);z-index:30;background:#102b57d9;color:#fff;font:700 12px/1.5 sans-serif;padding:2px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
 .nx-card .nx-number.nx-colored,.nx-card.nx-d .nx-number.nx-colored{filter:drop-shadow(0 1px 0 #fff);} /* 数字の色は数字ごと。持ち主は下の帯で見分ける */
+
+/* ── v19 新デザイン（img/next-v2）。画面は 9:16 の箱に固定し、背景の帯に合わせて置く。
+   帯：0〜8% 点と時計／8〜24% 相手のNEXT／24〜60% 場／60〜84% 自分のNEXT／84〜100% ゴミ箱。
+   札は 幅w% のとき 高さ=w×1.4×9/16 % ＝ w×0.7875 %。位置は左上の角で指定（ドラッグの transform とぶつけないため） */
+.nx-screen.nx-v2s{display:flex;align-items:center;justify-content:center;background:linear-gradient(#3c4252 50%,#a8692f 50%);}
+.nx-stage.nx-v2{width:min(100%,calc((100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)) * 9 / 16));height:auto;aspect-ratio:9/16;max-width:none;flex:none;background:url('img/next-v2/bg.webp') center/100% 100% no-repeat;}
+.nx-v2 .nx-next-label,.nx-v2 .nx-score-label{display:none;}
+/* 点と時計 */
+.nx-v2 .nx-score{top:1.28%;width:25%;height:6.03%;background:center/100% 100% no-repeat;padding-bottom:.3%;}
+.nx-v2 .nx-score-d{left:8.5%;background-image:url('img/next-v2/score-d.webp');}.nx-v2 .nx-score-p{right:auto;left:66.5%;background-image:url('img/next-v2/score-p.webp');}
+.nx-v2 .nx-score .nx-number{height:58%;filter:brightness(0) invert(1) drop-shadow(0 2px 0 #0005);}
+.nx-v2 .nx-time{left:43%;top:0.36%;width:14%;height:7.875%;background:url('img/next-v2/clock.webp') center/100% 100% no-repeat;align-items:center;padding-top:2.2%;}
+.nx-v2 .nx-time .nx-number{height:36%;}
+/* 札 */
+.nx-v2 .nx-card{width:19%;height:14.96%;border:0;border-radius:0;background:url('img/next-v2/card.webp') center/100% 100% no-repeat;box-shadow:none;overflow:visible;}
+.nx-v2 .nx-card:after{display:none;}
+.nx-v2 .nx-card:before{content:'';position:absolute;left:4%;top:3%;width:29%;aspect-ratio:1;background:url('img/next-v2/owner-p.webp') center/contain no-repeat;pointer-events:none;}
+.nx-v2 .nx-card.nx-d:before{background-image:url('img/next-v2/owner-d.webp');}
+.nx-v2 .nx-card .nx-number,.nx-v2 .nx-card.nx-d .nx-number{height:50%;margin-top:0;filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 2px 2px #0002);}
+.nx-v2 .nx-card.nx-head{left:20.5%;}.nx-v2 .nx-card.nx-d.nx-head{top:8.52%;}.nx-v2 .nx-card.nx-p.nx-head{top:64.52%;}
+.nx-v2 .nx-card.nx-preview{width:13%;height:10.24%;opacity:1;}.nx-v2 .nx-preview.nx-d{top:12.08%;}.nx-v2 .nx-preview.nx-p{top:68.08%;}
+.nx-v2 .nx-card.nx-preview-1{left:41%;}.nx-v2 .nx-card.nx-preview-2{left:55%;}
+/* 場 */
+.nx-v2 .nx-field-card{width:20%;height:15.75%;top:30.1%;}
+.nx-v2 .nx-slot{position:absolute;top:30.1%;width:20%;height:15.75%;pointer-events:none;}
+.nx-v2 .nx-sum{left:26%;top:50.35%;width:48%;height:6.3%;background:url('img/next-v2/total.webp') center/100% 100% no-repeat;gap:4%;}
+.nx-v2 .nx-sum>.nx-number{height:52%;}.nx-v2 .nx-sum .nx-target{height:40%;}.nx-v2 .nx-sum .nx-target i{font:normal clamp(13px,4vw,22px) sans-serif;color:#102b57;}
+.nx-v2 .nx-sum .nx-left{height:52%;margin-left:4%;}.nx-v2 .nx-left small{font:700 clamp(10px,2.8vw,15px) sans-serif;color:#102b57;}
+/* ゴミ箱と戻る */
+.nx-v2 .nx-action.discard.nx-trash{left:39%;top:86.3%;width:22%;height:12.375%;border-radius:50%;background:url('img/next-v2/trash.webp') center/100% 100% no-repeat;box-shadow:none;}
+.nx-v2 .nx-trash.hot{background-image:url('img/next-v2/trash-hot.webp');box-shadow:none;}
+.nx-v2 .nx-back{left:3%;top:88.5%;background:#ffffffd9;color:#5a3b1c;}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v18'; // 20点先取に（AI戦・オンラインとも）
+const APP_VER='v19'; // 新デザイン（アストラ製の素材 next-assets-v2：石のアリーナ・白い札・持ち主の角タブ・丸いゴミ箱）
+// const APP_VER='v18'; // 20点先取に（AI戦・オンラインとも）
 // const APP_VER='v17'; // 札の数字を数字ごとの色に（1赤 2橙 3青 4紫 5緑、昔のテンクルと同じ）
 // const APP_VER='v16'; // サーバーの50msごとの合図（Wi-Fiを寝かせない）に対応
 // const APP_VER='v15'; // 計測を自動でサーバーに記録（相手の札が画面に出るまで・自分の操作が届くまで）
@@ -148,6 +181,9 @@ function calcPts(cards){
 // v330: stairs:true で「段」ルール：10をこえたら目標が20→30→40→50に上がる。ぴったり止めたら 段ボーナス＋その段の札の役。11・22・33・44（と50こえ）は地雷＝出した人の点が全部相手へ。false で元のNEXT
 const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},overIsTrap:true,roundSec:20,winPt:20};
 // v332: pushDiscard:true で「捨てた札は相手のNEXTの先頭に割り込む」（押しつけ）。false で元どおり消える
+// skin:'v2' で新デザイン（img/next-v2）。'' で中庭デザインに戻る
+const NX_SKIN='v2',NX_V2='img/next-v2/';
+const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 const NX_CFG={pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
@@ -165,7 +201,7 @@ function nxWinPt(){return NX_CFG.stairs?NX_STAIR.winPt:NX_CFG.winPt;}
 function nxPoints(f){const r=calcPts(f); // v321: 枚数にかかわらず役を判定（3-3-4がワンペアにならなかった）
 return{total:r.total,label:r.label.split(' +')[0]};}
 // colored：札の数字だけ、数字ごとの色（img/next-v319/digitc-1〜5.webp）
-function NxNumber({value,className='',colored=false}){return h('span',{className:'nx-number '+className+(colored?' nx-colored':''),role:'img','aria-label':String(value)},String(value).split('').map((d,i)=>h('img',{key:i,src:NX_ASSET+(colored&&d>='1'&&d<='5'?'digitc-':'digit-')+d+'.webp',alt:'','aria-hidden':true,draggable:false})));}
+function NxNumber({value,className='',colored=false}){return h('span',{className:'nx-number '+className+(colored?' nx-colored':''),role:'img','aria-label':String(value)},String(value).split('').map((d,i)=>h('img',{key:i,src:NX_SKIN==='v2'?NX_V2+(colored&&d>='1'&&d<='5'?'dc-':'d-')+d+'.webp':NX_ASSET+(colored&&d>='1'&&d<='5'?'digitc-':'digit-')+d+'.webp',alt:'','aria-hidden':true,draggable:false})));}
 // Dedicated NEXT audio: newly generated samples, decoded before the first round.
 const NX_SOUND_FILES={play:'place',discard:'discard',complete:'complete'};
 const NX_AUDIO={buffers:{},pending:null,bus:null,voices:new Set()};
@@ -465,7 +501,7 @@ function NextMode({onBack}){
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
    {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
- return h('main',{className:'nx-screen'},h('div',{className:'nx-stage'+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
+ return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
   h('span',{className:'nx-score-label d'},'相手'),
@@ -473,10 +509,11 @@ function NextMode({onBack}){
   h('span',{className:'nx-score-label p'},'自分'),
   h('div',{className:'nx-time'+(st.time<=3&&st.phase==='play'?' low':''),role:'timer','aria-label':'残り '+st.time+' 秒'},h(NxNumber,{value:st.time})),
   queue('d'),
-  h('section',{className:'nx-field','aria-label':'場の札'},st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card',{key:st.rn+'-'+k,style:{left:[10.5,31,51.6,72.2][j]+'%','--slot':j}});}), // v330: 5枚目からは新しい4枚だけ見せる
+  h('section',{className:'nx-field','aria-label':'場の札'},
+   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card',{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j}});}), // v330: 5枚目からは新しい4枚だけ見せる
 
    // v328: 相手の次の札を、場の次の空き枠にゴースト表示（出せる時だけ）。NX_CFG.ghost:false で消える
-   (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:[10.5,31,51.6,72.2][st.field.length]+'%'},'aria-hidden':true}):null,
+   (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:NX_FIELD_X[st.field.length]+'%'},'aria-hidden':true}):null,
    h('div',{className:'nx-sum','aria-label':'場の合計 '+fs+' / '+tgt+'、あと '+(tgt-fs)},h(NxNumber,{value:fs}),
     h('span',{className:'nx-target'},h('i',null,'/'),h(NxNumber,{value:tgt})),
     h('span',{className:'nx-left'},h('small',null,'あと'),h(NxNumber,{value:Math.max(0,tgt-fs)}))),
@@ -510,7 +547,7 @@ function NextMode({onBack}){
 }
 // ── 開始前のローディング：画像（背景・札・数字）と音を全部読み終えてから画面を出す
 function nxLoadAll(onProgress){
- const imgs=['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
+ const imgs=NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
  const total=imgs.length+1;let done=0;const tick=()=>{done++;onProgress(done/total);};
  const one=src=>new Promise(res=>{const im=new Image();const fin=()=>{tick();res();};im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(fin);};im.onerror=fin;im.src=src;});
  const snd=Promise.resolve(nxPrepareAudio()).catch(()=>{}).then(tick);
