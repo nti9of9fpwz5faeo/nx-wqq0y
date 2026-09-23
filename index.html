@@ -104,6 +104,7 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-trash{pointer-events:none;transition:background .1s,box-shadow .1s;}
 .nx-trash.hot{background:#c9412a33;box-shadow:inset 0 0 0 3px #c9412a99;}
 .nx-ver{position:fixed;right:max(6px,env(safe-area-inset-right));bottom:max(4px,env(safe-area-inset-bottom));font:600 11px sans-serif;color:#5e492d;opacity:.55;z-index:100;pointer-events:none;}
+.nx-dialog .nx-bgm-btn{align-self:center;width:auto;min-width:0;min-height:34px;margin:0;padding:4px 14px;border:1px solid #b08b4f;border-radius:999px;background:#fffaf0;color:#5a4424;font:700 13px sans-serif;box-shadow:none;}
 .nx-ver-badge{align-self:center;display:inline-block;margin-top:-6px;padding:3px 12px;border-radius:999px;background:#174f92;color:#fff;font:700 13px/1.4 sans-serif;letter-spacing:.04em;}
 .nx-meter{position:absolute;left:50%;top:0.6%;transform:translateX(-50%);z-index:30;background:#102b57d9;color:#fff;font:700 12px/1.5 sans-serif;padding:2px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
 .nx-card .nx-number.nx-colored,.nx-card.nx-d .nx-number.nx-colored{filter:drop-shadow(0 1px 0 #fff);} /* 数字の色は数字ごと。持ち主は下の帯で見分ける */
@@ -158,7 +159,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v26'; // 札を元に戻す（左上の角タブ）。v25の青赤の札は img/next-v2/card-p,d に残してある
+const APP_VER='v27'; // BGM（Card Battle Riff）を対戦中ループ。タイトルで音楽オンオフ
+// const APP_VER='v26'; // 札を元に戻す（左上の角タブ）。v25の青赤の札は img/next-v2/card-p,d に残してある
 // const APP_VER='v25'; // 札の絵を青・赤の新しい札に（角タブ廃止）
 // const APP_VER='v24'; // 実況の声（ElevenLabs）を控えめに。NX_CFG.voice:false で消える
 // const APP_VER='v23'; // チュートリアル（あそびかた）：触りながら覚える6ステップ
@@ -207,7 +209,7 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -235,7 +237,7 @@ const NX_SOUND_FILES={play:'place',discard:'discard',complete:'complete'};
 const NX_AUDIO={buffers:{},pending:null,bus:null,voices:new Set()};
 function nxAudioBus(){if(!NX_AUDIO.bus){const bus=AC.createDynamicsCompressor();bus.threshold.value=-10;bus.knee.value=12;bus.ratio.value=4;bus.attack.value=.003;bus.release.value=.08;bus.connect(AC.destination);NX_AUDIO.bus=bus;}return NX_AUDIO.bus;}
 function nxPrepareAudio(){
- nxPrepareVoice();
+ nxPrepareVoice();nxPrepareBgm();
  if(NX_AUDIO.pending)return NX_AUDIO.pending;
  NX_AUDIO.pending=Promise.all(Object.entries(NX_SOUND_FILES).map(async([kind,file])=>{
   if(NX_AUDIO.buffers[kind])return;
@@ -256,6 +258,20 @@ function nxVoice(kind,force=false){try{if(!NX_CFG.voice)return;const now=perform
  resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_JK.buf[pick];g.gain.value=NX_CFG.voiceVol;
  src.connect(g);g.connect(AC.destination);src.onended=()=>{if(NX_JK.src===src)NX_JK.src=null;src.disconnect();g.disconnect();};
  NX_JK.src=src;NX_JK.at=now;src.start(AC.currentTime+(kind==='ten'?.12:0));}catch(e){}}
+// v27 BGM：bgm/battle.mp3 を対戦中（カウント〜決着前）だけループ。NX_CFG.bgm:false で消える。音量は NX_CFG.bgmVol。オンオフはタイトルで切替（端末に記録）
+const NX_BGM={buf:null,src:null,gain:null,pending:null,on:(()=>{try{return localStorage.getItem('nxBgm')!=='0';}catch(e){return true;}})()};
+function nxPrepareBgm(){if(!NX_CFG.bgm||NX_BGM.buf||NX_BGM.pending)return NX_BGM.pending;
+ NX_BGM.pending=fetch('bgm/battle.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>AC.decodeAudioData(b)).then(b=>{NX_BGM.buf=b;nxBgmSync();}).catch(()=>{}).finally(()=>{NX_BGM.pending=null;});return NX_BGM.pending;}
+let nxBgmWant=false;
+function nxBgmSync(){try{const want=NX_CFG.bgm&&NX_BGM.on&&nxBgmWant&&NX_BGM.buf;
+ if(want&&!NX_BGM.src){resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_BGM.buf;src.loop=true;
+  g.gain.setValueAtTime(.0001,AC.currentTime);g.gain.linearRampToValueAtTime(NX_CFG.bgmVol,AC.currentTime+.6);
+  src.connect(g);g.connect(AC.destination);src.start();NX_BGM.src=src;NX_BGM.gain=g;}
+ else if(!want&&NX_BGM.src){const src=NX_BGM.src,g=NX_BGM.gain;NX_BGM.src=null;NX_BGM.gain=null;
+  g.gain.cancelScheduledValues(AC.currentTime);g.gain.setValueAtTime(g.gain.value,AC.currentTime);g.gain.linearRampToValueAtTime(.0001,AC.currentTime+.5);
+  setTimeout(()=>{try{src.stop();}catch(e){}src.disconnect();g.disconnect();},600);}}catch(e){}}
+function nxBgmPlay(w){nxBgmWant=w;if(w&&!NX_BGM.buf)nxPrepareBgm();nxBgmSync();}
+function nxBgmToggle(){NX_BGM.on=!NX_BGM.on;try{localStorage.setItem('nxBgm',NX_BGM.on?'1':'0');}catch(e){}nxBgmSync();return NX_BGM.on;}
 function nxStopVoice(){if(NX_JK.src){try{NX_JK.src.stop();}catch(e){}NX_JK.src=null;}}
 function nxTrackVoice(source,gain){
  NX_AUDIO.voices.add(source);source.onended=()=>{NX_AUDIO.voices.delete(source);source.disconnect();gain.disconnect();};
@@ -309,6 +325,9 @@ function NextMode({onBack}){
  const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
  const clearAll=()=>{timers.current.forEach(clearTimeout);timers.current=[];};
  // v24 実況：点・時間・勝敗の変化を見てしゃべる（チュートリアル中はしゃべらない）
+ const[bgmOn,setBgmOn]=useState(NX_BGM.on);
+ useEffect(()=>{nxBgmPlay(tut<0&&['count','play','hold'].includes(st.phase));},[st.phase,tut]);
+ useEffect(()=>()=>nxBgmPlay(false),[]);
  const jk=useRef({p:0,d:0,t:99,ph:'',reach:{p:0,d:0}});
  useEffect(()=>{const J=jk.current,wp=nxWinPt();
   if(tut>=0){Object.assign(J,{p:st.pPt,d:st.dPt,t:st.time,ph:st.phase});return;}
@@ -632,6 +651,7 @@ function NextMode({onBack}){
   (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
    h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
    h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER),
+   NX_CFG.bgm&&h('button',{className:'nx-bgm-btn',onClick:()=>setBgmOn(nxBgmToggle()),'aria-pressed':bgmOn},bgmOn?'🔈 音楽 オン':'🔇 音楽 オフ'),
    st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・赤が相手。先に二十点で勝ち。',h('br'),'場の札はタップで1ラウンド1回だけ消せる。')):
     h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
    lobby&&lobby.step==='err'?h('p',{className:'nx-net-err'},lobby.text):null,
