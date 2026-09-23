@@ -171,7 +171,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v31'; // 捨てるのは1ラウンド10枚まで（ゴミ箱に残り枚数）
+const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
+// const APP_VER='v31'; // 捨てるのは1ラウンド10枚まで（ゴミ箱に残り枚数）
 // const APP_VER='v30'; // 先頭の札をまん中、次の2枚を右はしへ（NX_CFG.side）
 // const APP_VER='v29'; // 場の札を消した時の音（はさみ）
 // const APP_VER='v29'; // 英語の実況が確実に鳴るように（フォルダ名変更）＋場の札を消した時の音
@@ -269,10 +270,10 @@ const NX_JK_FILES=['ten-1','ten-2','last-1','last-2','rev-1','rev-2','reach-1','
 function nxPrepareVoice(){if(!NX_CFG.voice||NX_JK.pending)return NX_JK.pending;
  NX_JK.pending=Promise.all(NX_JK_FILES.map(async f=>{if(NX_JK.buf[f])return;try{const r=await fetch('se/jikkyo-en/'+f+'.mp3');if(r.ok)NX_JK.buf[f]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){}})).finally(()=>{NX_JK.pending=null;});return NX_JK.pending;}
 // kind: ten / last / rev / reach / end。しゃべり中は重ねない（end だけは割り込む）。同じ言い方を続けない
-function nxVoice(kind,force=false){try{if(!NX_CFG.voice)return;const now=performance.now();
+function nxVoice(kind,force=false,only=null){try{if(!NX_CFG.voice)return;const now=performance.now();
  if(NX_JK.src&&!force)return;if(!force&&now-NX_JK.at<900)return;
  if(NX_JK.src){try{NX_JK.src.stop();}catch(e){}NX_JK.src=null;}
- const opts=[kind+'-1',kind+'-2'].filter(f=>NX_JK.buf[f]);if(!opts.length)return;
+ const opts=(only?[only]:[kind+'-1',kind+'-2']).filter(f=>NX_JK.buf[f]);if(!opts.length)return;
  const pick=opts.length>1?opts.filter(f=>f!==NX_JK.last[kind])[Math.random()<.8?0:1]||opts[0]:opts[0];NX_JK.last[kind]=pick;
  resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_JK.buf[pick];g.gain.value=NX_CFG.voiceVol;
  src.connect(g);g.connect(AC.destination);src.onended=()=>{if(NX_JK.src===src)NX_JK.src=null;src.disconnect();g.disconnect();};
@@ -367,7 +368,7 @@ function NextMode({onBack}){
  useEffect(()=>{const J=jk.current,wp=nxWinPt();
   if(tut>=0){Object.assign(J,{p:st.pPt,d:st.dPt,t:st.time,ph:st.phase});return;}
   if(st.pPt+st.dPt===0&&J.p+J.d>0)J.reach={p:0,d:0};                         // 新しい試合
-  if(st.phase==='end'&&J.ph!=='end'&&(st.pPt>=wp||st.dPt>=wp))nxVoice('end',true);
+  if(st.phase==='end'&&J.ph!=='end'&&(st.pPt>=wp||st.dPt>=wp))nxVoice('end',true,st.pPt>=wp?'end-2':'end-1'); // 勝ち＝AND THAT'S THE MATCH!／負け＝GAME OVER!
   else if(st.pPt>J.p||st.dPt>J.d){
    const was=Math.sign(J.p-J.d),now=Math.sign(st.pPt-st.dPt),who=st.pPt>J.p?'p':'d',pt=who==='p'?st.pPt:st.dPt;
    if(was!==0&&now!==0&&was!==now)nxVoice('rev');                             // 逆転
@@ -684,7 +685,6 @@ function NextMode({onBack}){
     tut===0||tut===5?h('button',{onClick:()=>tutGo(tut+1)},'次へ'):null,
     tut===6?h('button',{onClick:()=>tutEnd(true)},'「やさしい」で遊ぶ'):null,
     h('button',{className:'nx-tut-skip',onClick:()=>tutEnd(false)},tut===6?'もどる':'やめる'))),
-  online&&meterText&&h('div',{className:'nx-meter'},meterText),
   st.count>=0&&h('div',{className:'nx-count',role:'status',key:'count'+st.count},st.count>0?h(NxNumber,{value:st.count}):'GO'),
   callout&&h('div',{className:'nx-callout'+(callout.end?' end':''),key:callout.k,'aria-hidden':true},h('span',null,callout.txt)),
   st.msg&&(st.msg.points?h(NxCelebration,{message:st.msg,key:'reward-'+st.msg.k}):h('div',{className:'nx-message',role:'status',key:st.msg.k},st.msg.text)),
