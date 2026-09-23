@@ -171,7 +171,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
+const APP_VER='v33'; // 15点先取に
+// const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
 // const APP_VER='v31'; // 捨てるのは1ラウンド10枚まで（ゴミ箱に残り枚数）
 // const APP_VER='v30'; // 先頭の札をまん中、次の2枚を右はしへ（NX_CFG.side）
 // const APP_VER='v29'; // 場の札を消した時の音（はさみ）
@@ -227,7 +228,7 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -626,7 +627,7 @@ function NextMode({onBack}){
   ['③ いらない札は捨てる','今の札を出すと、10を作れません。\n札を下に引っぱって離すと捨てられます。\n（ゴミ箱まで届かなくて大丈夫です）'],
   ['④ 場の札を消す','場の札をタップすると、1枚消せます。\n1ラウンドに1回だけです。\n相手の4をタップして消してみましょう。'],
   ['⑤ 役で点が増える','10を作った時の札で、点が変わります。\n・役なし 1点\n・同じ数字2枚（ペア） 2点\n・ペアが2組（ツーペア） 3点\n・同じ数字3枚（スリーカード） 4点\n・1・2・3・4 の4枚（ストレート） 5点'],
-  ['⑥ これで準備OK','先に20点取った方の勝ちです。\n1ラウンドは20秒。時間切れは得点なしです。\nまずは「やさしい」相手と遊んでみましょう。']];
+  ['⑥ これで準備OK','先に15点取った方の勝ちです。\n1ラウンドは20秒。時間切れは得点なしです。\nまずは「やさしい」相手と遊んでみましょう。']];
  function tutGo(n){const c=sR.current;++tok.current;clearAll();deadline.current=Infinity;setTut(n);
   const base={...c,phase:'play',count:-1,time:nxRoundSec(),msg:null,rmP:false,rmD:false,dcP:0,dcD:0,pPt:n>=3?c.pPt:0,dPt:0,pSerial:c.pSerial+1,dSerial:c.dSerial+1};
   if(n===0||n===1)set({...base,field:[],by:[],pQ:[3,1,4,2,5,3],dQ:[2,4,1,3,5,2]});
@@ -692,7 +693,7 @@ function NextMode({onBack}){
    h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
    h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER),
    NX_CFG.bgm&&h('button',{className:'nx-bgm-btn',onClick:()=>setBgmOn(nxBgmToggle()),'aria-pressed':bgmOn},bgmOn?'🔈 音楽 オン':'🔇 音楽 オフ'),
-   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・赤が相手。先に二十点で勝ち。',h('br'),'場の札はタップで1ラウンド1回だけ消せる。')):
+   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・赤が相手。先に十五点で勝ち。',h('br'),'場の札はタップで1ラウンド1回だけ消せる。')):
     h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
    lobby&&lobby.step==='err'?h('p',{className:'nx-net-err'},lobby.text):null,
    online?[h('button',{key:'rm',onClick:again,disabled:!!(rematch&&rematch.me)},rematch&&rematch.me?'相手を待っています…':rematch&&rematch.op?'もう一度（相手は待っています）':'もう一度'),
