@@ -108,7 +108,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v11'; // バージョン表示・自動更新を追加
+const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
+// const APP_VER='v11'; // バージョン表示・自動更新を追加
 const h=React.createElement;
 const{useState,useEffect,useRef,useCallback,useMemo}=React;
 const AC=new(window.AudioContext||window.webkitAudioContext)();
@@ -239,6 +240,7 @@ function NextMode({onBack}){
  function onPong(m){if(!m.s||!m.t)return;const now=Date.now(),rtt=now-m.t,c=clock.current;
   c.samples.push({rtt,off:m.s+rtt/2-now});if(c.samples.length>12)c.samples.shift();
   const best=c.samples.reduce((a,b)=>b.rtt<a.rtt?b:a);c.off=best.off;c.rtt=best.rtt;}
+ function roughClock(m){const c=clock.current;if(c.samples.length||!m.now)return;c.off=m.now-Date.now();} // ping の返事がまだ無い時の仮合わせ
  function warmClock(){[0,120,240,360,480].forEach(ms=>setTimeout(()=>wsSend({type:'nxPing',t:Date.now()}),ms));}
  // 予定表（sched）から、今のカウント・残り時間を自分で計算する
  function timing(sc){const n=srvNow();
@@ -280,7 +282,9 @@ function NextMode({onBack}){
    if(gap>6000){try{net.current&&net.current.close();}catch(e){}resume();return;}
    if(gap>2200)wsSend({type:'nxSync'});else wsSend({type:'nxPing',t:Date.now()});},1000);
   const tk=setInterval(()=>{const c=sR.current;if(!c.sched||(c.phase!=='count'&&c.phase!=='play'))return;
-   if(c.sched.rn!==undefined&&c.sched.rn!==c.rn)return;const tm=timing(c.sched);
+   let tm=timing(c.sched);
+   if(c.srvPhase==='play'&&tm.phase!=='play')tm={phase:'play',count:-1,time:c.time};
+   else if(tm.phase==='count'&&c.srvPhase==='count'&&c.srvCount>=0&&c.srvCount<tm.count)tm={...tm,count:c.srvCount};
    if(tm.phase===c.phase&&tm.count===c.count&&tm.time===c.time)return;
    if(tm.count===0&&c.count!==0)nxSE('go');                 // GO の音は各端末が同じ時刻に自分で鳴らす
    set({...c,...tm});},40);
@@ -305,9 +309,12 @@ function NextMode({onBack}){
    const prev=sR.current,msg=m.msg?{...m.msg,landed:prev.msg&&prev.msg.k===m.msg.k?prev.msg.landed:false}:null,ev=m.ev;
    const mine=ev&&ev.who==='p'&&(ev.se==='play'||ev.se==='discard')&&prev.pred; // 自分の操作は先に鳴らしてある
    if(m.phase==='count'&&prev.phase!=='count')setRematch(null);
-   const tm=m.sched&&(m.phase==='count'||m.phase==='play')?timing(m.sched):{phase:m.phase,count:m.count,time:m.time};
+   roughClock(m);
+   let tm=m.sched&&(m.phase==='count'||m.phase==='play')?timing(m.sched):{phase:m.phase,count:m.count,time:m.time};
+   if(m.phase==='play'&&tm.phase!=='play')tm={phase:'play',count:-1,time:m.time};              // サーバーが始めたら必ず始める
+   else if(m.phase==='count'&&tm.phase==='count'&&m.count<tm.count)tm={...tm,count:m.count};  // サーバーの方が先なら数字を合わせる
    if(tm.phase==='play'&&prev.phase==='count'&&prev.rn===m.rn&&prev.count!==0)nxSE('go');
-   set({...prev,pred:0,sched:m.sched,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
+   set({...prev,pred:0,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
    if(ev){
     if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);
     else if(ev.se==='play'){if(!mine)nxSE('play',ev.who);if(ev.who==='p')setBounce(0);
