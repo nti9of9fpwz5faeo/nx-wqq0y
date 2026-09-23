@@ -144,11 +144,13 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-rm.used{opacity:.35;filter:grayscale(1);}
 .nx-card.nx-removable{cursor:pointer;}
 .nx-card.nx-removable:active{transform:scale(.94);}
+.nx-card.nx-p.nx-head.nx-to-trash{opacity:.75;filter:saturate(.6);} /* 今離すと捨てる */
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v21'; // 1ラウンド20秒に
+const APP_VER='v22'; // 捨てる：下に引っぱって離すだけでOK（ゴミ箱に届かなくていい）
+// const APP_VER='v21'; // 1ラウンド20秒に
 // const APP_VER='v20'; // 1ラウンド1回、場の札をタップで消せる（自分・相手とも。NX_CFG.remove）
 // const APP_VER='v19'; // 新デザイン（アストラ製の素材 next-assets-v2：石のアリーナ・白い札・持ち主の角タブ・丸いゴミ箱）
 // const APP_VER='v18'; // 20点先取に（AI戦・オンラインとも）
@@ -265,7 +267,7 @@ function NxCelebration({message}){
 }
 // ── オンライン（Fly.io の tenkuru-server に nx.js を追加。サーバーが判定・時間・山札を持つ）
 // 操作：自分の先頭の札をタップ＝出す／左下のトラッシュまで引っぱる＝捨てる。途中で離したら元に戻る（はじく操作はやめた）
-const NX_GESTURE={dragPx:70,slopPx:10};
+const NX_GESTURE={dragPx:70,slopPx:10,downRate:.45}; // downRate：札の高さの何割、下に引っぱったら「捨てる」になるか
 const NX_SERVER='wss://4peace-server-vw1ezw.fly.dev';
 function NextMode({onBack}){
  const[st,setSt]=useState(()=>({phase:'ready',pQ:[3,1,4],dQ:[3,2,5],field:[],by:[],pPt:0,dPt:0,rn:0,count:-1,time:nxRoundSec(),msg:null,pSerial:0,dSerial:0,seg:0}));
@@ -281,15 +283,17 @@ function NextMode({onBack}){
  const trashRef=useRef(null),drag=useRef(null);
  function inTrash(x,y){const t=trashRef.current;if(!t)return false;const r=t.getBoundingClientRect(),m=10;return x>=r.left-m&&x<=r.right+m&&y>=r.top-m&&y<=r.bottom+m;}
  function cardDown(e){if(sR.current.phase!=='play')return;const el=e.currentTarget;try{el.setPointerCapture(e.pointerId);}catch(x){}
-  drag.current={id:e.pointerId,el,x0:e.clientX,y0:e.clientY,t0:performance.now(),moved:false};el.classList.add('nx-dragging');}
+  drag.current={id:e.pointerId,el,x0:e.clientX,y0:e.clientY,t0:performance.now(),moved:false,h:el.getBoundingClientRect().height||80};el.classList.add('nx-dragging');}
+ // 捨てる判定：下に一定以上引っぱった（横より下の方が大きい）か、ゴミ箱の上
+ function wantTrash(d,x,y){const dx=x-d.x0,dy=y-d.y0;return (dy>=d.h*NX_GESTURE.downRate&&dy>Math.abs(dx)*0.8)||(inTrash(x,y)&&Math.hypot(dx,dy)>=NX_GESTURE.dragPx);}
  function cardMove(e){const d=drag.current;if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.x0,dy=e.clientY-d.y0;
   if(!d.moved&&Math.hypot(dx,dy)<NX_GESTURE.slopPx)return;d.moved=true;d.el.style.transform='translate('+dx+'px,'+dy+'px)'+(dy<0?' scale(1.04)':'');
-  const hot=inTrash(e.clientX,e.clientY);if(trashRef.current)trashRef.current.classList.toggle('hot',hot);}
+  const hot=wantTrash(d,e.clientX,e.clientY);d.el.classList.toggle('nx-to-trash',hot);if(trashRef.current)trashRef.current.classList.toggle('hot',hot);}
  function cardUp(e,cancel){const d=drag.current;if(!d||d.id!==e.pointerId)return;drag.current=null;
   const dx=e.clientX-d.x0,dy=e.clientY-d.y0,ms=performance.now()-d.t0,t=trashRef.current;if(t)t.classList.remove('hot');
-  const back=()=>{d.el.classList.remove('nx-dragging');d.el.style.transform='';};
+  const back=()=>{d.el.classList.remove('nx-dragging','nx-to-trash');d.el.style.transform='';};
   if(cancel||sR.current.phase!=='play'){back();return;}
-  if(inTrash(e.clientX,e.clientY)&&Math.hypot(dx,dy)>=NX_GESTURE.dragPx){back();discard('p');return;}          // トラッシュに落とした
+  if(d.moved&&wantTrash(d,e.clientX,e.clientY)){back();discard('p');return;}                                   // 下に引っぱった／ゴミ箱の上 → 捨てる
   if(!d.moved){back();play('p');return;}                                                                     // タップ（ほとんど動かしていない）
   back();}                                                                                                   // どちらでもない → 元に戻る
  // ── オンライン（サーバーが正。自分の操作だけ先に画面へ反映して、サーバーの返事で答え合わせ）
