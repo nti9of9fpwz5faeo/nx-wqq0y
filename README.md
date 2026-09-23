@@ -24,3 +24,7 @@
 - 採用：くるみ提供 tenkuru-next-assets（img/next/src に元PNG・layout.json・参考図、img/next/*.webp が実使用）
 - 10マスのゲージ案（非言語）はやめた
 - 操作ボタンは仮（画像はくるみが用意予定）
+
+## 画面（9/23 更新）
+- 本体テンクル v333 の「ネクスト」の見た目・ルール・AI・SEをそのまま移植（img/next-v319・se/next-v320）。青いアリーナ素材（img/next）は不採用だが残置
+- 次：オンライン対戦

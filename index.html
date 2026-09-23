@@ -1,49 +1,98 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>NEXT</title>
-<link rel="preload" as="image" href="img/next/arena_background.webp">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <style>
-@font-face{font-family:Lilita;src:url(fonts/LilitaOne-Regular.ttf)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{height:100%;overflow:hidden;background:#0b3fb0 url(img/next/arena_background.webp) center/cover no-repeat;font-family:Lilita,"Arial Rounded MT Bold",system-ui,sans-serif;color:#fff}
-body{display:grid;place-items:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-/* 画面は9:16の箱。座標は layout.json の比率（中心基準） */
-#app{position:relative;width:min(100vw,56.25dvh);aspect-ratio:9/16;max-height:100%;container-type:inline-size} /* 背景は body に1枚だけ（箱にも敷くと継ぎ目が出る） */
-.L{position:absolute;transform:translate(-50%,-50%)}
-.score{left:50%;top:12.1%;width:77.4%;height:7.7%;background:url(img/next/scoreboard_base.webp) center/100% 100% no-repeat}
-.score span{position:absolute;top:60%;transform:translate(-50%,-50%);font-size:6.3cqw;white-space:nowrap;color:#fff}
-.score small{font-size:2.6cqw;margin-left:.6cqw}
-.score .blue{left:22.5%}.score .red{left:75%}
-.sum{left:50%;top:39.6%;width:19.5%;height:3.7%;background:url(img/next/sum_base.webp) center/100% 100% no-repeat;display:grid;place-items:center;font-size:3.9cqw;color:#fff}
-.card,.slot{position:absolute;width:20.2%;aspect-ratio:5/7;transform:translate(-50%,-50%) scale(var(--sc,1))}
-.card{filter:drop-shadow(0 .35cqw .45cqw #002b6455);transition:left .12s}
-.timer{left:87%;top:63.7%;width:16.6%;aspect-ratio:1}
-.timer img,.timer svg{position:absolute;inset:0;width:100%;height:100%}
-.timer text{font-family:Lilita,"Arial Rounded MT Bold",sans-serif}
-.btns{position:absolute;left:0;right:0;top:84%;display:flex;justify-content:space-between;align-items:center;padding:0 6%;gap:10%}
-.btn{border:none;border-radius:3.5cqw;font-family:inherit;color:#fff;box-shadow:0 1.2cqw 0 #0005}
-.btn:active{transform:translateY(.8cqw);box-shadow:0 .4cqw 0 #0005}
-.btn.dis{background:#5b6f95;width:32%;height:13cqw;font-size:4.6cqw}
-.btn.play{background:#1f6fe0;width:52%;height:17cqw;font-size:6.6cqw}
-.btn[disabled]{filter:grayscale(.6) brightness(.8)}
-.tag{font-size:2.6cqw;opacity:.6;display:block}
-.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4cqw;background:#0a1c4acc;z-index:5;text-align:center;padding:6cqw}
-.overlay h1{font-size:12cqw}.overlay p{font-size:4cqw;line-height:1.7;opacity:.9;font-family:system-ui,sans-serif}
-.overlay .btn{background:#1f6fe0;width:56cqw;height:14cqw;font-size:5.4cqw}
-.lv{display:flex;gap:2.5cqw}.lv .btn{width:auto!important;padding:0 4cqw;height:12cqw!important;background:#3b4f7a!important;font-size:4.4cqw!important}
-.lv .btn.on{background:#1f6fe0!important}
-.big{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:20cqw;text-shadow:0 1cqw 0 #0006;pointer-events:none;z-index:4}
-.msg{position:absolute;left:0;right:0;top:39.6%;transform:translateY(-50%);text-align:center;font-size:8cqw;pointer-events:none;z-index:4;text-shadow:0 .8cqw 0 #0008}
-.msg.p{color:#bfe3ff}.msg.d{color:#ffc9bf}
-</style></head>
-<body><div id="app"></div>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:100%;height:100dvh;touch-action:none;}
+/* v319 NEXT: generated courtyard and numerals; all dimensions share one stage. */
+.nx-screen{height:100dvh;width:100%;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);background:#e5cda8;color:#102b57;overflow:hidden;user-select:none;touch-action:manipulation;}
+.nx-stage{position:relative;width:100%;max-width:560px;height:100%;margin:auto;background:url('img/next-v319/court.webp') center/100% 100% no-repeat;--nx-card-w:17.3%;--nx-card-h:13.1%;}
+.nx-stage button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.nx-stage button:focus-visible{outline:3px solid #35c7ff;outline-offset:3px;}
+.nx-number{display:inline-flex;align-items:center;justify-content:center;height:100%;gap:1px;vertical-align:middle;}
+.nx-number img{display:block;height:100%;width:auto;max-width:none;object-fit:contain;pointer-events:none;}
+.nx-score{position:absolute;top:10.5%;width:14.5%;height:4.25%;display:flex;align-items:center;justify-content:center;}
+.nx-score-d{left:15.9%;}.nx-score-p{right:15.8%;}.nx-score .nx-number{filter:brightness(0) invert(95%) drop-shadow(0 2px 2px #321);}
+.nx-score-label{position:absolute;top:15.95%;font:bold clamp(10px,2.8vw,14px) sans-serif;letter-spacing:.08em;color:#734512;}
+.nx-score-label.d{left:19%;}.nx-score-label.p{right:19%;color:#16447b;}
+.nx-time{position:absolute;left:49.3%;top:9.3%;width:8%;height:2.6%;display:flex;justify-content:center;}
+.nx-time.low{animation:nx-urgent .7s ease-in-out infinite;}
+.nx-back{position:absolute;left:1%;top:1%;min-width:44px;min-height:44px;border:1px solid #ad854b80;border-radius:50%;background:#fff4dbdc;color:#745223;font-size:28px!important;z-index:3;}
+.nx-card{position:absolute;width:var(--nx-card-w);height:var(--nx-card-h);border:2px solid #d5a953;border-radius:7%;padding:0;background:#fff9ed url('img/next-v319/card.webp') center/100% 100%;box-shadow:0 2px 3px #38200680,inset 0 0 0 1px #fff6d0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.nx-card:after{content:'';position:absolute;bottom:1.5%;left:2%;right:2%;height:12%;background:linear-gradient(#176dde,#074ab4);border-radius:0 0 5px 5px;box-shadow:0 -1px #e5bc69;}
+.nx-card.nx-d:after{background:linear-gradient(#d9560a,#a52b06);}
+.nx-card .nx-number{height:49%;margin-top:-8%;filter:drop-shadow(0 1px 0 #fff);}
+.nx-card.nx-d .nx-number{filter:sepia(1) saturate(6) hue-rotate(335deg);}
+.nx-card.nx-head{left:29.6%;}.nx-card.nx-d.nx-head{top:19.6%;}.nx-card.nx-p.nx-head{top:63.65%;}
+.nx-card.nx-preview{width:10.8%;height:8%;opacity:.95;}.nx-preview.nx-d{top:24.7%;}.nx-preview.nx-p{top:68.75%;}
+.nx-card.nx-preview-1{left:49.3%;}.nx-card.nx-preview-2{left:62.4%;}
+.nx-next-label{position:absolute;left:29.6%;width:17.3%;text-align:center;color:#fff5db;font:700 clamp(11px,3.6vw,20px) Georgia,serif;line-height:1;text-shadow:0 1px 2px #351b04;pointer-events:none;}
+.nx-next-label.d{top:18.2%;}.nx-next-label.p{top:62.2%;}
+/* v322: NX_CFG.mat:false で赤青の手札マットなし背景（court-nomat.webp）。戻すときは mat:true */
+.nx-stage.nx-nomat{background-image:url('img/next-v319/court-nomat.webp');}
+.nx-stage.nx-nomat .nx-next-label{color:#734512;text-shadow:0 1px 0 #fff3d6;}.nx-stage.nx-nomat .nx-next-label.p{color:#16447b;}
+/* v326: NX_CFG.row:true で相手のNEXTと自分のNEXTを同じ段（場の上）に横並び。相手＝左に詰める、自分＝右上。戻すときは row:false */
+.nx-stage.nx-row .nx-card.nx-head{width:15.5%;height:11.8%;top:19.6%;}
+.nx-stage.nx-row .nx-card.nx-preview{width:9.7%;height:7.2%;top:24.2%;}
+.nx-stage.nx-row .nx-card.nx-d.nx-head{left:4%;}
+.nx-stage.nx-row .nx-card.nx-d.nx-preview-1{left:21.5%;}.nx-stage.nx-row .nx-card.nx-d.nx-preview-2{left:33.2%;}
+.nx-stage.nx-row .nx-card.nx-p.nx-head{left:52%;top:19.6%;}
+.nx-stage.nx-row .nx-card.nx-p.nx-preview-1{left:69.5%;}.nx-stage.nx-row .nx-card.nx-p.nx-preview-2{left:81.2%;}
+.nx-stage.nx-row .nx-next-label{width:15.5%;top:18.2%;}.nx-stage.nx-row .nx-next-label.d{left:4%;}.nx-stage.nx-row .nx-next-label.p{left:52%;top:18.2%;}
+.nx-field-card{top:39.45%;animation:nx-land .18s ease-out;}
+.nx-card.nx-ghost{opacity:.42;border-style:dashed;border-color:#c2412f;box-shadow:none;animation:nx-ghost-in .25s ease-out;pointer-events:none;}
+@keyframes nx-ghost-in{from{opacity:0;transform:translateY(-6px)}to{opacity:.42;transform:none}}
+.nx-completed .nx-card.nx-ghost{display:none;}
+.nx-trap{position:absolute;left:50%;top:59.2%;transform:translateX(-50%);font:bold clamp(11px,3.2vw,17px) sans-serif;color:#b3261e;background:#fff8e9e6;border-radius:10px;padding:1px 8px;white-space:nowrap;pointer-events:none;}
+.nx-sum{position:absolute;left:25.7%;top:54%;width:48%;height:4.4%;display:flex;align-items:center;justify-content:center;gap:5%;white-space:nowrap;}
+.nx-sum .nx-target{height:52%;display:flex;align-items:center;gap:3px;}.nx-sum .nx-target i{font:normal clamp(15px,4.5vw,27px) Georgia,serif;}.nx-sum .nx-left{display:flex;align-items:center;height:100%;gap:5px;margin-left:6%;}.nx-left small{font:bold clamp(10px,2.8vw,16px) sans-serif;}
+.nx-action{position:absolute;top:81.25%;width:39%;height:11.7%;background:transparent;border:0;border-radius:12%;padding:0;}
+.nx-action.discard{left:9.1%;}.nx-action.play{left:52.5%;}.nx-action:active{background:#b48b3533;box-shadow:inset 0 4px 5px #5d3c2338;transform:translateY(2px);}
+.nx-action:disabled{cursor:default;background:#e7d9c575;}.nx-action.blocked{background:#d7c7ac50;}
+.nx-count,.nx-message{position:absolute;z-index:4;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;border:2px solid #c99c50;border-radius:18px;background:#fff8e9f2;box-shadow:0 5px 18px #4b30154d;pointer-events:none;white-space:nowrap;color:#133566;}
+.nx-count{height:14%;min-width:25%;font:bold clamp(36px,12vw,64px) Georgia,serif;}.nx-count .nx-number{height:100%;}.nx-message{font:bold clamp(15px,4vw,23px) sans-serif;}.nx-message .nx-number{height:30px;}
+.nx-reject{animation:nx-shake .25s ease!important;}.nx-discarding{animation:nx-shuffle .18s ease-out;}
+.nx-overlay{position:absolute;inset:0;z-index:8;background:#785b353d;display:flex;align-items:center;justify-content:center;padding:24px;}
+.nx-dialog{width:100%;max-width:340px;padding:25px 22px;background:linear-gradient(135deg,#fffcf2,#f4e5ca);border:3px solid #cfa555;box-shadow:0 6px 25px #50361970,inset 0 0 0 2px #fff7db;border-radius:24px;text-align:center;display:flex;flex-direction:column;gap:16px;font:500 14px/1.7 sans-serif;}
+.nx-dialog h1{font:700 30px Georgia,serif;letter-spacing:.07em;}.nx-dialog p{margin:0;}.nx-dialog button{min-height:48px;border:1px solid #aa803c;border-radius:12px;background:linear-gradient(#287de0,#1252a9);color:#fff;font-weight:bold;padding:10px;}.nx-dialog .nx-home{background:transparent;color:#5e492d;border:0;}.nx-levels{display:flex;gap:5px;}.nx-levels button{flex:1;background:#fff9e9;color:#7a6040;padding:8px 3px;font-size:12px;}.nx-levels button[aria-pressed=true]{background:#174f92;color:#fff;}.nx-result{display:flex;align-items:center;justify-content:center;gap:18px;height:42px;}
+@keyframes nx-land{from{transform:translateY(-12px) scale(.93);opacity:.5}to{transform:none;opacity:1}}
+@keyframes nx-shuffle{from{transform:translateX(8px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes nx-shake{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+@keyframes nx-urgent{50%{filter:sepia(1) saturate(8);transform:scale(1.1)}}
+@media(prefers-reduced-motion:reduce){.nx-stage *{animation:none!important;transition:none!important;}}
+/* v320 NEXT: coordinated completion, point travel and score impact. */
+.nx-stage{overflow:hidden;}
+.nx-completed .nx-field-card{animation:nx-card-reward .65s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--slot,0)*35ms);box-shadow:0 0 0 2px #fff8d1,0 0 22px #ffbf2b,inset 0 0 12px #ffe5a9;}
+.nx-celebration{position:absolute;inset:0;z-index:5;pointer-events:none;--reward-color:#1b64be;--reward-light:#8fdcff;}
+.nx-celebration-d{--reward-color:#b9430e;--reward-light:#ffd194;}
+.nx-burst-ring{position:absolute;left:50%;top:46%;width:35%;aspect-ratio:1;border:4px solid #ffefb0;border-radius:50%;box-shadow:0 0 22px #ffd859,inset 0 0 22px #ffdf83;animation:nx-ring .65s ease-out both;}
+.nx-reward-banner{position:absolute;left:9%;top:39.5%;width:82%;min-height:15%;padding:12px 6px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:3px solid #e9c46e;border-radius:18px;background:linear-gradient(130deg,#fffdf3,#ffefd1 50%,#fff8e8);box-shadow:0 0 0 2px #fff7dd,0 7px 20px #75441750,0 0 30px #ffdc7680;color:var(--reward-color);animation:nx-reward-pop 1.45s cubic-bezier(.22,.8,.25,1) both;}
+.nx-role-title{font:900 clamp(21px,6.7vw,36px)/1.1 'Noto Sans JP',sans-serif;letter-spacing:.03em;text-shadow:0 2px #fff,0 3px 0 #decaa5;display:flex;align-items:center;justify-content:center;gap:6px;}
+.nx-role-title .nx-number{height:36px;}.nx-role-points{display:flex;align-items:center;justify-content:center;gap:5px;height:clamp(40px,7.6vh,65px);font:bold 42px Georgia,serif;}.nx-role-points .nx-number{height:100%;}
+.nx-celebration.big .nx-reward-banner{border-color:#dba337;box-shadow:0 0 0 3px #fff4c7,0 8px 25px #65411760,0 0 55px #ffd251d9;}
+.nx-celebration.big .nx-role-title{color:#9c640b;}.nx-celebration.big .nx-role-points{height:clamp(48px,8.4vh,72px);}
+.nx-particles{position:absolute;left:50%;top:46%;width:0;height:0;}
+.nx-particles i{position:absolute;width:7px;height:11px;border-radius:2px;background:#ecc15a;box-shadow:0 0 5px #fff0bc;animation:nx-spark 1s ease-out var(--delay) both;}
+.nx-particles i:nth-child(3n){background:var(--reward-color);}.nx-particles i:nth-child(3n+1){background:var(--reward-light);width:5px;height:5px;border-radius:50%;}
+.nx-point-flight{position:absolute;left:50%;top:47%;display:flex;align-items:center;justify-content:center;gap:2px;height:42px;padding:6px 10px;background:#fff2be;border:2px solid #ddac43;border-radius:50%;box-shadow:0 0 18px #ffe19b;color:#926b23;font:bold 30px Georgia,serif;animation:nx-score-flight .55s .28s cubic-bezier(.5,0,.75,1) both;}
+.nx-point-flight .nx-number{height:100%;}
+.nx-score.nx-earned{animation:nx-score-impact .5s ease-out;}
+@keyframes nx-card-reward{0%{transform:scale(1)}20%{transform:translateY(-5px) scale(1.055);filter:brightness(1.3)}60%{transform:translateY(-2px) scale(1.025)}100%{transform:none}}
+@keyframes nx-ring{0%{transform:translate(-50%,-50%) scale(.35);opacity:.9}100%{transform:translate(-50%,-50%) scale(2.8);opacity:0}}
+@keyframes nx-reward-pop{0%,7%{transform:scale(.55);opacity:0}19%{transform:scale(1.07);opacity:1}28%,79%{transform:scale(1);opacity:1}100%{transform:translateY(-8px) scale(.98);opacity:0}}
+@keyframes nx-spark{0%{transform:translate(0,0) scale(.3);opacity:0}12%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--turn)) scale(.4);opacity:0}}
+@keyframes nx-score-flight{0%{transform:translate(-50%,-50%) scale(.7);opacity:0}12%,30%{opacity:1}100%{left:var(--score-x);top:12.5%;transform:translate(-50%,-50%) scale(.3);opacity:0}}
+@keyframes nx-score-impact{0%{transform:scale(1)}28%{transform:scale(1.24);filter:drop-shadow(0 0 10px #ffe081)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.nx-celebration *,.nx-completed .nx-field-card,.nx-score.nx-earned{animation:none!important;}.nx-particles,.nx-point-flight,.nx-burst-ring{display:none;}}
+</style></head><body><div id="root"></div>
 <script>
-// NEXT オンライン版の試作：くるみ提供の素材 tenkuru-next-assets（青いアリーナ・UNO風の札・スコア枠・時計・合計枠・空き枠）
-// ルールは本体のネクストと同じ。ボタンは仮（画像はくるみが後で用意）。数値は CFG / LAY に集約
-const CFG={winPt:10,roundSec:10,countFrom:5,countStepMs:650,goMs:500,holdMs:1500,timeUpMs:1200,queueN:3};
-const AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
-// ── ルール（本体のネクストと同じ。canPlay・calcPts は本体からそのまま）
+// 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
+const h=React.createElement;
+const{useState,useEffect,useRef,useCallback,useMemo}=React;
+const AC=new(window.AudioContext||window.webkitAudioContext)();
 function canPlay(v,fieldSum,field){
   if(field.filter(x=>x!==null).length>=4)return false;
   const filled=field.filter(x=>x!==null).length+1;
@@ -54,69 +103,219 @@ function canPlay(v,fieldSum,field){
 }
 function calcPts(cards){
   const s=[...cards].sort((a,b)=>a-b);
-  if(cards.length===4&&s.join('')==='1234')return{total:5,label:'ストレート'};
-  if(cards.length===2&&s[0]===5&&s[1]===5)return{total:1,label:'役なし'};
-  const freq={};cards.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+  if(cards.length===4&&s.join('')==='1234')return{total:5,label:'ストレート +5pt',voice:'ストレート'};
+  if(cards.length===2&&s[0]===5&&s[1]===5)return{total:1,label:'役なし +1pt',voice:'役なし'};
+  const freq={};
+  cards.forEach(v=>{freq[v]=(freq[v]||0)+1;});
   const counts=Object.values(freq);
-  if(counts.some(c=>c>=3))return{total:4,label:'スリーカード'};
-  if(counts.filter(c=>c===2).length>=2)return{total:3,label:'ツーペア'};
-  if(counts.some(c=>c===2))return{total:2,label:'ワンペア'};
-  return{total:1,label:'役なし'};
+  if(counts.some(c=>c>=3))return{total:4,label:'スリーカード +4pt',voice:'スリーカード'};
+  if(counts.filter(c=>c===2).length>=2)return{total:3,label:'ツーペア +3pt',voice:'ツーペア'};
+  if(counts.some(c=>c===2))return{total:2,label:'ワンペア +2pt',voice:'ワンペア'};
+  return{total:1,label:'役なし +1pt',voice:'役なし'};
 }
-const vals=f=>f.map(x=>x.v),sum=f=>f.reduce((a,x)=>a+x.v,0);
-function legal(v,f){const s=sum(f);return v>=1&&v<=5&&f.length<4&&s+v<=10&&canPlay(v,s,vals(f));}
-function draw(q){while(q.length<CFG.queueN+6){const v=1+Math.floor(Math.random()*5);if(q.length>=2&&q.slice(-2).every(x=>x===v))continue;q.push(v);}return q;}
-// ── 状態
-let S={phase:'title',level:'normal',pPt:0,dPt:0,field:[],pQ:[],dQ:[],time:CFG.roundSec,big:'',msg:null,rn:0};
-let timers=[],deadline=0,aiT=null;
-const at=(ms,f)=>{const t=setTimeout(f,ms);timers.push(t);return t;};
-function clearAll(){timers.forEach(clearTimeout);timers=[];clearTimeout(aiT);}
-function beep(f,d=.08,g=.12){try{const A=beep.a||(beep.a=new (window.AudioContext||window.webkitAudioContext)());const o=A.createOscillator(),v=A.createGain();o.frequency.value=f;v.gain.setValueAtTime(g,A.currentTime);v.gain.exponentialRampToValueAtTime(.001,A.currentTime+d);o.connect(v).connect(A.destination);o.start();o.stop(A.currentTime+d);}catch(e){}}
-function start(){clearAll();S={...S,pPt:0,dPt:0,rn:0};round();}
-function round(){clearAll();S={...S,phase:'count',rn:S.rn+1,field:[],pQ:draw([]),dQ:draw([]),time:CFG.roundSec,msg:null};
-  let c=CFG.countFrom;const tick=()=>{if(c>0){S.big=String(c);beep(520);render();c--;at(CFG.countStepMs,tick);}else{S.big='GO!';beep(880,.15);render();at(CFG.goMs,go);}};tick();}
-function go(){S.big='';S.phase='play';deadline=performance.now()+CFG.roundSec*1000;render();loop();aiStep();}
-function loop(){if(S.phase!=='play')return;const t=Math.max(0,(deadline-performance.now())/1000);const n=Math.ceil(t);if(n!==S.time){S.time=n;render();}if(t<=0){timeUp();return;}requestAnimationFrame(loop);}
-function timeUp(){S.phase='hold';S.msg={t:'時間切れ',k:''};render();beep(200,.3);at(CFG.timeUpMs,next);}
-function next(){if(S.pPt>=CFG.winPt||S.dPt>=CFG.winPt){S.phase='end';render();return;}round();}
-function play(who){if(S.phase!=='play')return;const q=who==='p'?S.pQ:S.dQ,v=q[0];if(!legal(v,S.field))return;
-  S.field=[...S.field,{v,who}];q.shift();draw(q);beep(who==='p'?660:440);
-  if(sum(S.field)===10){const r=calcPts(vals(S.field));S[who==='p'?'pPt':'dPt']+=r.total;S.phase='hold';S.msg={t:r.label+' +'+r.total,k:who};render();beep(990,.25,.15);at(CFG.holdMs,next);return;}
-  render();}
-function discard(who){if(S.phase!=='play')return;const q=who==='p'?S.pQ:S.dQ;q.shift();draw(q);beep(300,.05,.06);render();}
-// ── 相手
-function aiStep(){const ai=AI[S.level];aiT=setTimeout(()=>{if(S.phase!=='play')return;
-  const f=S.field,fs=sum(f),v=S.dQ[0],pv=S.pQ[0],ok=legal(v,f),read=Math.random()<ai.read;
-  const threat=legal(pv,f)&&fs+pv===10,gift=ok&&legal(pv,[...f,{v}])&&fs+v+pv===10;
-  if(ok&&fs+v===10)play('d');
-  else if(ok&&threat&&read&&!gift)play('d');
-  else if(ok&&read&&gift)discard('d');
-  else if(ok&&Math.random()<ai.safe)play('d');
-  else discard('d');
-  aiStep();},ai.delay+Math.random()*ai.jitter);}
-// ── 画面（配置は img/next/src/layout.json の初期値）
-const LAY={qStep:14.8,qX:[35.8,50.6,65.4],oppY:27.7,meY:71.1,fieldY:50.1,fieldX:[16.7,39.1,61.3,83.7],qScale:[1,1,1],
-  timer:{cx:256,cy:298,r:153,w:20,color:'#20CEF3',text:'#08265C'}}; // qScale：後で [1,.8,.8] にすれば先頭以外を縮小できる
-const $=s=>document.querySelector(s);
-const cardImg=(v,who,x,y,sc=1,z=0)=>`<img class="card" src="img/next/${who==='p'?'blue':'red'}_${v}.webp" alt="${v}" draggable="false" style="left:${x}%;top:${y}%;--sc:${sc};z-index:${z}">`;
-function queue(q,who,y){return q.slice(0,CFG.queueN).map((v,i)=>cardImg(v,who,LAY.qX[i],y,LAY.qScale[i],i+1)).join('');} // 先頭＝左（本体と同じ）。後ろの札ほど上に重ねて左上の数字を隠さない
-function field(){return LAY.fieldX.map((x,i)=>{const c=S.field[i];return c?cardImg(c.v,c.who,x,LAY.fieldY):`<img class="slot" src="img/next/field_slot.webp" alt="" draggable="false" style="left:${x}%;top:${LAY.fieldY}%">`;}).join('');}
-function timer(){const T=LAY.timer,p=Math.max(0,Math.min(1,S.time/CFG.roundSec)),C=2*Math.PI*T.r;
-  return `<div class="L timer"><img src="img/next/timer_base.webp" alt="" draggable="false"><svg viewBox="0 0 512 512">${p>0?`<circle cx="${T.cx}" cy="${T.cy}" r="${T.r}" fill="none" stroke="${T.color}" stroke-width="${T.w}" stroke-linecap="round" stroke-dasharray="${(C*p).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 ${T.cx} ${T.cy})"/>`:''}<text x="${T.cx}" y="${T.cy+4}" dominant-baseline="middle" text-anchor="middle" fill="${T.text}" font-size="132">${String(Math.ceil(S.time)).padStart(2,'0')}</text></svg></div>`;}
-function render(){const a=$('#app');
-  if(S.phase==='title'){a.innerHTML=`<div class="overlay"><h1>NEXT</h1><p>次の札を「だす」か「すてる」。<br>場の合計をぴったり10にしよう。<br>先に${CFG.winPt}点で勝ち。</p><div class="lv">${Object.entries(AI).map(([k,x])=>`<button class="btn ${k===S.level?'on':''}" data-lv="${k}">${x.label}</button>`).join('')}</div><button class="btn" id="st">はじめる</button></div>`;
-    a.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.level=b.dataset.lv;render();});$('#st').onclick=start;return;}
-  const fs=sum(S.field),live=S.phase==='play';
-  a.innerHTML=`<div class="L score"><span class="blue">${S.pPt}<small>pt</small></span><span class="red">${S.dPt}<small>pt</small></span></div>
-  ${queue(S.dQ,'d',LAY.oppY)}
-  <div class="L sum">${fs} / 10</div>
-  ${field()}
-  ${timer()}
-  ${queue(S.pQ,'p',LAY.meY)}
-  <div class="btns"><button class="btn dis" id="bd" ${live?'':'disabled'}>すてる<span class="tag">仮</span></button><button class="btn play" id="bp" ${live&&legal(S.pQ[0],S.field)?'':'disabled'}>だす<span class="tag">仮</span></button></div>
-  ${S.big?`<div class="big">${S.big}</div>`:''}${S.msg?`<div class="msg ${S.msg.k}">${S.msg.t}</div>`:''}
-  ${S.phase==='end'?`<div class="overlay"><h1>${S.pPt>=CFG.winPt?'WIN!':'LOSE'}</h1><p>${S.pPt} - ${S.dPt}</p><button class="btn" id="again">もう一度</button><button class="btn" id="home" style="background:#3b4f7a">もどる</button></div>`:''}`;
-  $('#bd').onclick=()=>discard('p');$('#bp').onclick=()=>play('p');
-  if(S.phase==='end'){$('#again').onclick=start;$('#home').onclick=()=>{S.phase='title';render();};}}
-render();
+
+// ── v318 ネクスト（仮名）：手札なし。自分の「次の札」3枚だけ見える（テトリスのNEXT）。できるのは先頭を「出す」か「捨てる」だけ。相手の次3枚も丸見え ──
+// v330: stairs:true で「段」ルール：10をこえたら目標が20→30→40→50に上がる。ぴったり止めたら 段ボーナス＋その段の札の役。11・22・33・44（と50こえ）は地雷＝出した人の点が全部相手へ。false で元のNEXT
+const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},overIsTrap:true,roundSec:20,winPt:20};
+// v332: pushDiscard:true で「捨てた札は相手のNEXTの先頭に割り込む」（押しつけ）。false で元どおり消える
+const NX_CFG={pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:10,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
+const NX_ASSET='img/next-v319/';
+function nxDraw(q){while(q.length<NX_CFG.queueN+6){const v=Math.floor(Math.random()*5)+1;if(q.length>=2&&q.slice(-2).every(x=>x===v))continue;q.push(v);}return q;}
+function nxLegal(v,f){return Number.isInteger(v)&&v>=1&&v<=5&&f.length<4&&f.reduce((a,b)=>a+b,0)+v<=10&&canPlay(v,f.reduce((a,b)=>a+b,0),f);}
+function nxSum(f){return f.reduce((a,b)=>a+b,0);}
+function nxTarget(sum){return Math.min(NX_STAIR.max,Math.max(10,Math.ceil(sum/10)*10));}
+function nxIsTrap(sum){return NX_STAIR.traps.includes(sum)||(NX_STAIR.overIsTrap&&sum>NX_STAIR.max);}
+function nxIsExact(sum){return sum>0&&sum%10===0&&sum<=NX_STAIR.max;}
+function nxCanPut(v,f){return NX_CFG.stairs?(Number.isInteger(v)&&v>=1&&v<=5):nxLegal(v,f);}
+function nxRoundSec(){return NX_CFG.stairs?NX_STAIR.roundSec:NX_CFG.roundSec;}
+function nxWinPt(){return NX_CFG.stairs?NX_STAIR.winPt:NX_CFG.winPt;}
+function nxPoints(f){const r=calcPts(f); // v321: 枚数にかかわらず役を判定（3-3-4がワンペアにならなかった）
+return{total:r.total,label:r.label.split(' +')[0]};}
+function NxNumber({value,className=''}){return h('span',{className:'nx-number '+className,role:'img','aria-label':String(value)},String(value).split('').map((d,i)=>h('img',{key:i,src:NX_ASSET+'digit-'+d+'.webp',alt:'','aria-hidden':true,draggable:false})));}
+// Dedicated NEXT audio: newly generated samples, decoded before the first round.
+const NX_SOUND_FILES={play:'place',discard:'discard',complete:'complete'};
+const NX_AUDIO={buffers:{},pending:null,bus:null,voices:new Set()};
+function nxAudioBus(){if(!NX_AUDIO.bus){const bus=AC.createDynamicsCompressor();bus.threshold.value=-10;bus.knee.value=12;bus.ratio.value=4;bus.attack.value=.003;bus.release.value=.08;bus.connect(AC.destination);NX_AUDIO.bus=bus;}return NX_AUDIO.bus;}
+function nxPrepareAudio(){
+ if(NX_AUDIO.pending)return NX_AUDIO.pending;
+ NX_AUDIO.pending=Promise.all(Object.entries(NX_SOUND_FILES).map(async([kind,file])=>{
+  if(NX_AUDIO.buffers[kind])return;
+  try{const r=await fetch('se/next-v320/'+file+'.mp3');if(!r.ok)throw Error('audio '+r.status);NX_AUDIO.buffers[kind]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){/* A fresh, short local tone handles unavailable audio without a late replay. */}
+ })).finally(()=>{NX_AUDIO.pending=null;});return NX_AUDIO.pending;
+}
+function nxTrackVoice(source,gain){
+ NX_AUDIO.voices.add(source);source.onended=()=>{NX_AUDIO.voices.delete(source);source.disconnect();gain.disconnect();};
+ if(NX_AUDIO.voices.size>12){const oldest=NX_AUDIO.voices.values().next().value;try{oldest.stop();}catch(e){}NX_AUDIO.voices.delete(oldest);}
+}
+function nxStopAudio(){for(const source of NX_AUDIO.voices){try{source.stop();}catch(e){}}NX_AUDIO.voices.clear();}
+function nxTone(f,{delay=0,d=.12,v=.1,type='sine'}={}){
+ const at=AC.currentTime+delay,source=AC.createOscillator(),gain=AC.createGain();source.type=type;source.frequency.setValueAtTime(f,at);
+ gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(v,at+.003);gain.gain.exponentialRampToValueAtTime(.0001,at+d);
+ source.connect(gain);gain.connect(nxAudioBus());nxTrackVoice(source,gain);source.start(at);source.stop(at+d+.015);
+}
+function nxSE(kind,who='p',points=1){
+ try{resumeAC();const own=who==='p'?1:.48,buffer=NX_AUDIO.buffers[kind];
+  if(buffer){const source=AC.createBufferSource(),gain=AC.createGain();source.buffer=buffer;
+   source.playbackRate.value=kind==='complete'?(points>=4?1:points>=2?1.06:1.14):(who==='p'?1:.94);
+   gain.gain.value=own*(kind==='play'?.8:kind==='discard'?.22:points>=4?.85:points>=2?.72:.52);
+   source.connect(gain);gain.connect(nxAudioBus());nxTrackVoice(source,gain);source.start();return;
+  }
+  if(kind==='play'){nxTone(320,{d:.065,v:.2*own});nxTone(970,{d:.024,v:.05*own});}
+  else if(kind==='discard'){nxTone(420,{d:.055,v:.065*own,type:'triangle'});nxTone(240,{delay:.02,d:.055,v:.045*own});}
+  else if(kind==='complete'){[523.25,659.25,783.99].forEach((f,i)=>nxTone(f,{delay:i*.055,d:.24,v:.09*own}));}
+  else if(kind==='score'){[659.25,783.99,1046.5].slice(0,points>=4?3:2).forEach((f,i)=>nxTone(f,{delay:i*.032,d:.09,v:.055*own}));}
+  else if(kind==='go'){nxTone(392,{d:.095,v:.1});nxTone(587.33,{delay:.045,d:.12,v:.08});}
+  else if(kind==='timeout'){nxTone(293.66,{d:.11,v:.07});nxTone(220,{delay:.1,d:.16,v:.06});}
+  else if(kind==='reject')nxTone(180,{d:.07,v:.08});
+  else if(kind==='victory'){[523.25,659.25,783.99,1046.5].forEach((f,i)=>nxTone(f,{delay:i*.065,d:.28,v:.065}));}
+ }catch(e){}
+}
+function NxCelebration({message}){
+ const big=message.points>=4,mid=message.points>=2;
+ return h('div',{className:'nx-celebration nx-celebration-'+message.kind+(big?' big':mid?' medium':''),'aria-label':message.text+'、'+message.points+'点',role:'status'},
+  h('div',{className:'nx-burst-ring','aria-hidden':true}),
+  h('div',{className:'nx-particles','aria-hidden':true},Array.from({length:big?28:mid?18:10},(_,i)=>{const angle=i*2.39996,r=65+(i%5)*19;return h('i',{key:i,style:{'--dx':Math.cos(angle)*r+'px','--dy':Math.sin(angle)*r+'px','--turn':i*43+'deg','--delay':(i%4)*.025+'s'}});})),
+  h('div',{className:'nx-reward-banner'},
+   h('div',{className:'nx-role-title'},message.points===1?h(React.Fragment,null,h(NxNumber,{value:10}),'完成！'):message.text),
+   h('div',{className:'nx-role-points'},h('span',null,'+'),h(NxNumber,{value:message.points}))),
+  h('div',{className:'nx-point-flight','aria-hidden':true,style:{'--score-x':message.kind==='p'?'77%':'23%'}},'+',h(NxNumber,{value:message.points})));
+}
+function NextMode({onBack}){
+ const[st,setSt]=useState(()=>({phase:'ready',pQ:[3,1,4],dQ:[3,2,5],field:[],by:[],pPt:0,dPt:0,rn:0,count:-1,time:nxRoundSec(),msg:null,pSerial:0,dSerial:0,seg:0}));
+ const[level,setLevel]=useState('normal'),[bounce,setBounce]=useState(0);
+ const sR=useRef(st);sR.current=st;const tok=useRef(0),timers=useRef([]),deadline=useRef(0);
+ const set=n=>{sR.current=n;setSt(n);};
+ const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
+ const clearAll=()=>{timers.current.forEach(clearTimeout);timers.current=[];};
+ useEffect(()=>{nxPrepareAudio();return()=>{++tok.current;clearAll();nxStopAudio();};},[]);
+ function startRound(base,rn){
+  const my=++tok.current;clearAll();let c=NX_CFG.countFrom;
+  set({...base,phase:'count',rn,field:[],by:[],seg:0,count:c,time:nxRoundSec(),msg:null});
+  const tick=()=>{if(my!==tok.current)return;c--;
+   if(c>0){set({...sR.current,count:c});at(NX_CFG.countStepMs,tick);return;}
+   set({...sR.current,count:0});nxSE('go');
+   at(NX_CFG.goMs,()=>{if(my!==tok.current)return;deadline.current=performance.now()+nxRoundSec()*1000;set({...sR.current,phase:'play',count:-1});runTimer(my);});};
+  at(NX_CFG.countStepMs,tick);
+ }
+ function runTimer(my){const step=()=>{if(my!==tok.current||sR.current.phase!=='play')return;
+  const t=Math.max(0,Math.ceil((deadline.current-performance.now())/1000));
+  if(t===0){timeUp(my);return;}if(t!==sR.current.time)set({...sR.current,time:t});at(100,step);};at(100,step);}
+ function timeUp(my){if(my!==tok.current||sR.current.phase!=='play')return;nxSE('timeout');
+  set({...sR.current,phase:'hold',time:0,msg:{k:Date.now(),text:'TIME UP',kind:'miss'}});
+  at(NX_CFG.timeUpMs,()=>{if(my===tok.current)startRound(sR.current,sR.current.rn+1);});
+ }
+ function active(){if(sR.current.phase!=='play')return false;if(performance.now()>=deadline.current){timeUp(tok.current);return false;}return true;}
+ function play(who){
+  if(!active())return false;const s=sR.current,q=who==='p'?s.pQ:s.dQ,v=q[0];
+  if(NX_CFG.stairs)return playStair(who,s,q,v);
+  if(!nxLegal(v,s.field)){if(who==='p'){setBounce(n=>n+1);nxSE('reject');}return false;}
+  const nq=nxDraw(q.slice(1)),nf=[...s.field,v],n={...s,field:nf,by:[...s.by,who]};
+  n[who==='p'?'pQ':'dQ']=nq;n[who==='p'?'pSerial':'dSerial']++;
+  if(who==='p')setBounce(0);nxSE('play',who);
+  if(nf.reduce((a,b)=>a+b,0)===10){
+   const r=nxPoints(nf);n[who==='p'?'pPt':'dPt']+=r.total;n.phase='hold';n.msg={k:s.rn,text:r.label,points:r.total,kind:who,landed:false};
+   set(n);const my=tok.current;
+   at(100,()=>{if(my===tok.current)nxSE('complete',who,r.total);});
+   at(830,()=>{if(my!==tok.current||sR.current.phase!=='hold')return;set({...sR.current,msg:{...sR.current.msg,landed:true}});nxSE('score',who,r.total);});
+   at(NX_CFG.tenHoldMs,()=>{if(my!==tok.current)return;const c=sR.current;
+    if(c.pPt>=nxWinPt()||c.dPt>=nxWinPt()){clearAll();if(c.pPt>=nxWinPt())nxSE('victory');set({...c,phase:'end',msg:null});return;}
+    startRound(c,c.rn+1);});return true;
+  }set(n);return true;
+ }
+
+ // v330: 段ルールの「出す」
+ function finishHold(ms){const my=tok.current;at(ms,()=>{if(my!==tok.current)return;const c=sR.current;
+  if(c.pPt>=nxWinPt()||c.dPt>=nxWinPt()){clearAll();if(c.pPt>=nxWinPt())nxSE('victory');set({...c,phase:'end',msg:null});return;}
+  startRound(c,c.rn+1);});}
+ function playStair(who,s,q,v){
+  if(!nxCanPut(v,s.field))return false;
+  const before=nxSum(s.field),nf=[...s.field,v],sum=before+v,n={...s,field:nf,by:[...s.by,who]};
+  n[who==='p'?'pQ':'dQ']=nxDraw(q.slice(1));n[who==='p'?'pSerial':'dSerial']++;
+  if(nxTarget(sum)>nxTarget(before)&&!nxIsExact(before))n.seg=nf.length-1; // 目標が上がった札から新しい段
+  if(who==='p')setBounce(0);nxSE('play',who);
+  const me=who==='p'?'pPt':'dPt',op=who==='p'?'dPt':'pPt';
+  if(nxIsTrap(sum)){
+   const lost=s[me];n[op]+=lost;n[me]=0;n.phase='hold';
+   n.msg={k:Date.now(),kind:'miss',text:(sum>NX_STAIR.max?'50こえ':'💣'+sum)+'！'+(who==='p'?'自分':'相手')+'の'+lost+'点が'+(who==='p'?'相手':'自分')+'へ'};
+   set(n);nxSE('timeout');finishHold(1800);return true;
+  }
+  if(nxIsExact(sum)){
+   const r=nxPoints(nf.slice(n.seg)),bonus=NX_STAIR.bonus[sum]||0,total=r.total+bonus;
+   n[me]+=total;n.phase='hold';n.msg={k:s.rn,text:sum+'ぴったり '+r.label,points:total,kind:who,landed:false};
+   set(n);const my=tok.current;
+   at(100,()=>{if(my===tok.current)nxSE('complete',who,total);});
+   at(830,()=>{if(my!==tok.current||sR.current.phase!=='hold')return;set({...sR.current,msg:{...sR.current.msg,landed:true}});nxSE('score',who,total);});
+   finishHold(NX_CFG.tenHoldMs);return true;
+  }
+  set(n);return true;
+ }
+ function discard(who){if(!active())return false;const s=sR.current,key=who==='p'?'pQ':'dQ',serial=who==='p'?'pSerial':'dSerial';
+  if(who==='p')setBounce(0);const n={...s,[key]:nxDraw(s[key].slice(1)),[serial]:s[serial]+1};
+  if(NX_CFG.pushDiscard){const ok=who==='p'?'dQ':'pQ',os=who==='p'?'dSerial':'pSerial';n[ok]=[s[key][0],...s[ok]].slice(0,NX_CFG.queueN+8);n[os]=s[os]+1;} // v332: 相手の先頭へ
+  set(n);nxSE('discard',who);return true;
+ }
+
+ // v330: 段ルールの相手。地雷はふむ前に読む／ぴったりは取る／こっちにぴったりを渡さない
+ function stairAI(ai){const s=sR.current,fs=nxSum(s.field),v=s.dQ[0],pv=s.pQ[0],after=fs+v,read=Math.random()<ai.read;
+  if(nxIsExact(after)){play('d');return;}
+  if(nxIsTrap(after)){if(read||Math.random()<ai.safe)discard('d');else play('d');return;}
+  if(read&&nxIsExact(fs+pv)&&!nxIsExact(after+pv)){play('d');return;} // 相手のぴったりをつぶす
+  if(read&&nxIsExact(after+pv)){discard('d');return;} // 出すと相手にぴったりを渡す
+  if(read&&nxIsTrap(after+pv)){play('d');return;} // 相手を地雷に追い込む
+  if(Math.random()<ai.safe)play('d');else discard('d');
+ }
+ useEffect(()=>{if(st.phase!=='play')return;let alive=true,t;const ai=NX_AI[level];
+  const step=()=>{if(!alive||sR.current.phase!=='play')return;
+   if(NX_CFG.stairs){stairAI(ai);t=setTimeout(step,ai.delay+Math.random()*ai.jitter);return;}
+   const s=sR.current,fs=s.field.reduce((a,b)=>a+b,0),v=s.dQ[0],pv=s.pQ[0],ok=nxLegal(v,s.field);
+   const givesTen=ok&&nxLegal(pv,[...s.field,v])&&fs+v+pv===10;
+   const threatened=nxLegal(pv,s.field)&&fs+pv===10;
+   if(ok&&fs+v===10)play('d');
+   else if(NX_CFG.pushDiscard&&threatened&&Math.random()<ai.read)discard('d'); // v332: 押しつけてこっちの10をつぶす
+   else if(nxLegal(s.dQ[1],s.field)&&fs+s.dQ[1]===10&&Math.random()<ai.read)discard('d');
+   else if(ok&&threatened&&!givesTen&&Math.random()<ai.read)play('d');
+   else if(ok&&(!givesTen||Math.random()>ai.read)&&Math.random()<ai.safe)play('d');
+   else discard('d');
+   t=setTimeout(step,ai.delay+Math.random()*ai.jitter);};
+  t=setTimeout(step,ai.delay);return()=>{alive=false;clearTimeout(t);};},[st.phase,level]);
+ const start=()=>{nxStopAudio();nxPrepareAudio();try{resumeAC();}catch(e){}startRound({pQ:nxDraw([]),dQ:nxDraw([]),pPt:0,dPt:0,pSerial:0,dSerial:0},1);};
+ const leave=()=>{++tok.current;clearAll();nxStopAudio();onBack();};
+ const fs=st.field.reduce((a,b)=>a+b,0),canP=st.phase==='play'&&nxCanPut(st.pQ[0],st.field),win=st.pPt>=nxWinPt(),tgt=NX_CFG.stairs?nxTarget(fs):10,trapNext=NX_STAIR.traps.find(x=>x>fs),shownFrom=Math.max(0,st.field.length-4);
+ const visibleScore=who=>{const pts=who==='p'?st.pPt:st.dPt;return st.msg?.points&&st.msg.kind===who&&!st.msg.landed?pts-st.msg.points:pts;};
+ const scoreClass=who=>'nx-score nx-score-'+who+(st.msg?.landed&&st.msg.kind===who?' nx-earned':'');
+ const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、出す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v}));
+ const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
+  h('span',{className:'nx-next-label '+who},'NEXT'),
+  (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
+   {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onClick:()=>play('p'),disabled:st.phase!=='play'}:{})})));
+ return h('main',{className:'nx-screen'},h('div',{className:'nx-stage'+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
+  h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
+  h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
+  h('span',{className:'nx-score-label d'},'相手'),
+  h('div',{className:scoreClass('p'),'aria-label':'自分のスコア '+visibleScore('p')},h(NxNumber,{value:visibleScore('p')})),
+  h('span',{className:'nx-score-label p'},'自分'),
+  h('div',{className:'nx-time'+(st.time<=3&&st.phase==='play'?' low':''),role:'timer','aria-label':'残り '+st.time+' 秒'},h(NxNumber,{value:st.time})),
+  queue('d'),
+  h('section',{className:'nx-field','aria-label':'場の札'},st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card',{key:st.rn+'-'+k,style:{left:[10.5,31,51.6,72.2][j]+'%','--slot':j}});}), // v330: 5枚目からは新しい4枚だけ見せる
+
+   // v328: 相手の次の札を、場の次の空き枠にゴースト表示（出せる時だけ）。NX_CFG.ghost:false で消える
+   (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:[10.5,31,51.6,72.2][st.field.length]+'%'},'aria-hidden':true}):null,
+   h('div',{className:'nx-sum','aria-label':'場の合計 '+fs+' / '+tgt+'、あと '+(tgt-fs)},h(NxNumber,{value:fs}),
+    h('span',{className:'nx-target'},h('i',null,'/'),h(NxNumber,{value:tgt})),
+    h('span',{className:'nx-left'},h('small',null,'あと'),h(NxNumber,{value:Math.max(0,tgt-fs)}))),
+   NX_CFG.stairs&&trapNext?h('div',{className:'nx-trap','aria-label':'地雷 '+trapNext},'💣'+trapNext):null),
+  queue('p'),
+  h('button',{className:'nx-action discard','aria-label':'先頭の札を捨てる',disabled:st.phase!=='play',onClick:()=>discard('p')}),
+  h('button',{className:'nx-action play'+(!canP?' blocked':''),'aria-label':'先頭の札を出す','aria-disabled':!canP,disabled:st.phase!=='play',onClick:()=>play('p')}),
+  st.count>=0&&h('div',{className:'nx-count',role:'status',key:'count'+st.count},st.count>0?h(NxNumber,{value:st.count}):'GO'),
+  st.msg&&(st.msg.points?h(NxCelebration,{message:st.msg,key:'reward-'+st.msg.k}):h('div',{className:'nx-message',role:'status',key:st.msg.k},st.msg.text)),
+  (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
+   h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
+   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・橙が相手。先に十点で勝ち。')):
+    h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
+   h('div',{className:'nx-levels','aria-label':'相手の強さ'},Object.entries(NX_AI).map(([k,v])=>h('button',{key:k,'aria-pressed':level===k,onClick:()=>setLevel(k)},v.label))),
+   h('button',{onClick:start},st.phase==='ready'?'はじめる':'もう一度'),h('button',{className:'nx-home',onClick:leave},'ホームへ')))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(NextMode,{onBack:()=>location.reload()}));
 </script></body></html>
