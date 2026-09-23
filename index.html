@@ -32,7 +32,7 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-next-label{position:absolute;left:29.6%;width:17.3%;text-align:center;color:#fff5db;font:700 clamp(11px,3.6vw,20px) Georgia,serif;line-height:1;text-shadow:0 1px 2px #351b04;pointer-events:none;}
 .nx-next-label.d{top:18.2%;}.nx-next-label.p{top:62.2%;}
 /* v322: NX_CFG.mat:false で赤青の手札マットなし背景（court-nomat.webp）。戻すときは mat:true */
-.nx-stage.nx-nomat{background-image:url('img/next-v319/court-nomat.webp');}
+.nx-stage.nx-nomat{background-image:url('img/next-v319/court-nomat-v2.webp');}
 .nx-stage.nx-nomat .nx-next-label{color:#734512;text-shadow:0 1px 0 #fff3d6;}.nx-stage.nx-nomat .nx-next-label.p{color:#16447b;}
 /* v326: NX_CFG.row:true で相手のNEXTと自分のNEXTを同じ段（場の上）に横並び。相手＝左に詰める、自分＝右上。戻すときは row:false */
 .nx-stage.nx-row .nx-card.nx-head{width:15.5%;height:11.8%;top:19.6%;}
@@ -465,7 +465,7 @@ function NextMode({onBack}){
 }
 // ── 開始前のローディング：画像（背景・札・数字）と音を全部読み終えてから画面を出す
 function nxLoadAll(onProgress){
- const imgs=['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'));
+ const imgs=['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'));
  const total=imgs.length+1;let done=0;const tick=()=>{done++;onProgress(done/total);};
  const one=src=>new Promise(res=>{const im=new Image();const fin=()=>{tick();res();};im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(fin);};im.onerror=fin;im.src=src;});
  const snd=Promise.resolve(nxPrepareAudio()).catch(()=>{}).then(tick);
