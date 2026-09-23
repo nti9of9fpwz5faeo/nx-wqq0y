@@ -111,7 +111,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v17'; // 札の数字を数字ごとの色に（1赤 2橙 3青 4紫 5緑、昔のテンクルと同じ）
+const APP_VER='v18'; // 20点先取に（AI戦・オンラインとも）
+// const APP_VER='v17'; // 札の数字を数字ごとの色に（1赤 2橙 3青 4紫 5緑、昔のテンクルと同じ）
 // const APP_VER='v16'; // サーバーの50msごとの合図（Wi-Fiを寝かせない）に対応
 // const APP_VER='v15'; // 計測を自動でサーバーに記録（相手の札が画面に出るまで・自分の操作が届くまで）
 // const APP_VER='v14'; // オンライン中に「通信」「描画」の時間を測って表示（原因調べ用）
@@ -147,7 +148,7 @@ function calcPts(cards){
 // v330: stairs:true で「段」ルール：10をこえたら目標が20→30→40→50に上がる。ぴったり止めたら 段ボーナス＋その段の札の役。11・22・33・44（と50こえ）は地雷＝出した人の点が全部相手へ。false で元のNEXT
 const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},overIsTrap:true,roundSec:20,winPt:20};
 // v332: pushDiscard:true で「捨てた札は相手のNEXTの先頭に割り込む」（押しつけ）。false で元どおり消える
-const NX_CFG={pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:10,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -489,7 +490,7 @@ function NextMode({onBack}){
   (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
    h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
    h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER),
-   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・橙が相手。先に十点で勝ち。')):
+   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・橙が相手。先に二十点で勝ち。')):
     h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
    lobby&&lobby.step==='err'?h('p',{className:'nx-net-err'},lobby.text):null,
    online?[h('button',{key:'rm',onClick:again,disabled:!!(rematch&&rematch.me)},rematch&&rematch.me?'相手を待っています…':rematch&&rematch.op?'もう一度（相手は待っています）':'もう一度'),
