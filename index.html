@@ -145,11 +145,21 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-card.nx-removable{cursor:pointer;}
 .nx-card.nx-removable:active{transform:scale(.94);}
 .nx-card.nx-p.nx-head.nx-to-trash{opacity:.75;filter:saturate(.6);} /* 今離すと捨てる */
+.nx-tut{position:absolute;left:4%;right:4%;top:1%;z-index:35;background:#fffdf6f5;border:3px solid #f0b429;border-radius:18px;padding:12px 16px 12px;box-shadow:0 8px 24px #0005;color:#102b57;font:500 15px/1.65 system-ui,sans-serif;white-space:pre-line;}
+.nx-tut.big{top:24%;}
+.nx-tut h2{font:800 19px/1.3 system-ui,sans-serif;margin:2px 0 4px;}
+.nx-tut-step{font:700 12px system-ui;color:#8a6d1c;}
+.nx-tut-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+.nx-tut-btns button{border:0;border-radius:12px;padding:10px 18px;font:700 15px system-ui;background:#1f6fe0;color:#fff;box-shadow:0 3px 0 #0e4fa8;}
+.nx-tut-btns .nx-tut-skip{background:transparent;color:#6b5a3a;box-shadow:none;padding:10px 8px;}
+.nx-card.nx-tut-glow{box-shadow:0 0 0 4px #ffd24a,0 0 22px 6px #ffd24acc;border-radius:10%;animation:nx-tut-pulse 1s ease-in-out infinite;z-index:5;}
+@keyframes nx-tut-pulse{50%{box-shadow:0 0 0 6px #ffd24a,0 0 30px 10px #ffd24aee;}}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v22'; // 捨てる：下に引っぱって離すだけでOK（ゴミ箱に届かなくていい）
+const APP_VER='v23'; // チュートリアル（あそびかた）：触りながら覚える6ステップ
+// const APP_VER='v22'; // 捨てる：下に引っぱって離すだけでOK（ゴミ箱に届かなくていい）
 // const APP_VER='v21'; // 1ラウンド20秒に
 // const APP_VER='v20'; // 1ラウンド1回、場の札をタップで消せる（自分・相手とも。NX_CFG.remove）
 // const APP_VER='v19'; // 新デザイン（アストラ製の素材 next-assets-v2：石のアリーナ・白い札・持ち主の角タブ・丸いゴミ箱）
@@ -274,6 +284,7 @@ function NextMode({onBack}){
  const[level,setLevel]=useState('normal'),[bounce,setBounce]=useState(0);
  const[lobby,setLobby]=useState(null),[online,setOnline]=useState(false),[rematch,setRematch]=useState(null),[code,setCode]=useState('');
  const net=useRef(null),onl=useRef(false);onl.current=online;
+ const[tut,setTut]=useState(-1),tutR=useRef(-1);tutR.current=tut; // チュートリアルの段階（-1＝していない）
  const sR=useRef(st);sR.current=st;const tok=useRef(0),timers=useRef([]),deadline=useRef(0);
  const set=n=>{sR.current=n;setSt(n);};
  const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
@@ -449,6 +460,7 @@ function NextMode({onBack}){
    at(100,()=>{if(my===tok.current)nxSE('complete',who,r.total);});
    at(830,()=>{if(my!==tok.current||sR.current.phase!=='hold')return;set({...sR.current,msg:{...sR.current.msg,landed:true}});nxSE('score',who,r.total);});
    at(NX_CFG.tenHoldMs,()=>{if(my!==tok.current)return;const c=sR.current;
+    if(tutR.current>=0){tutGo(3);return;}
     if(c.pPt>=nxWinPt()||c.dPt>=nxWinPt()){clearAll();if(c.pPt>=nxWinPt())nxSE('victory');set({...c,phase:'end',msg:null});return;}
     startRound(c,c.rn+1);});return true;
   }set(n);return true;
@@ -500,7 +512,7 @@ function NextMode({onBack}){
   if(read&&nxIsTrap(after+pv)){play('d');return;} // 相手を地雷に追い込む
   if(Math.random()<ai.safe)play('d');else discard('d');
  }
- useEffect(()=>{if(st.phase!=='play'||online)return;let alive=true,t;const ai=NX_AI[level];
+ useEffect(()=>{if(st.phase!=='play'||online||tut>=0)return;let alive=true,t;const ai=NX_AI[level];
   const step=()=>{if(!alive||sR.current.phase!=='play')return;
    if(NX_CFG.stairs){stairAI(ai);t=setTimeout(step,ai.delay+Math.random()*ai.jitter);return;}
    const s=sR.current,fs=s.field.reduce((a,b)=>a+b,0),v=s.dQ[0],pv=s.pQ[0],ok=nxLegal(v,s.field);
@@ -514,7 +526,32 @@ function NextMode({onBack}){
    else if(ok&&(!givesTen||Math.random()>ai.read)&&Math.random()<ai.safe)play('d');
    else discard('d');
    t=setTimeout(step,ai.delay+Math.random()*ai.jitter);};
-  t=setTimeout(step,ai.delay);return()=>{alive=false;clearTimeout(t);};},[st.phase,level,online]);
+  t=setTimeout(step,ai.delay);return()=>{alive=false;clearTimeout(t);};},[st.phase,level,online,tut]);
+ // ── チュートリアル（あそびかた）：時計は止め、相手は動かさず、決めた札で1つずつ試してもらう
+ const TUT_TEXT=[
+  ['NEXTのあそびかた','場の札の合計を、ぴったり10にするゲームです。\n下が自分、上が相手。1つずつ試してみましょう。'],
+  ['① 札を出す','一番左の大きい札が、次に出す札です。\nタップすると場に出ます。やってみましょう。'],
+  ['② ぴったり10で得点','相手も同じ場に札を出してきます。\n場は 3＋2＝5。あと5です。\n5の札をタップして、10を作りましょう。'],
+  ['③ いらない札は捨てる','今の札を出すと、10を作れません。\n札を下に引っぱって離すと捨てられます。\n（ゴミ箱まで届かなくて大丈夫です）'],
+  ['④ 場の札を消す','場の札をタップすると、1枚消せます。\n1ラウンドに1回だけです。\n相手の4をタップして消してみましょう。'],
+  ['⑤ 役で点が増える','10を作った時の札で、点が変わります。\n・役なし 1点\n・同じ数字2枚（ペア） 2点\n・ペアが2組（ツーペア） 3点\n・同じ数字3枚（スリーカード） 4点\n・1・2・3・4 の4枚（ストレート） 5点'],
+  ['⑥ これで準備OK','先に20点取った方の勝ちです。\n1ラウンドは20秒。時間切れは得点なしです。\nまずは「やさしい」相手と遊んでみましょう。']];
+ function tutGo(n){const c=sR.current;++tok.current;clearAll();deadline.current=Infinity;setTut(n);
+  const base={...c,phase:'play',count:-1,time:nxRoundSec(),msg:null,rmP:false,rmD:false,pPt:n>=3?c.pPt:0,dPt:0,pSerial:c.pSerial+1,dSerial:c.dSerial+1};
+  if(n===0||n===1)set({...base,field:[],by:[],pQ:[3,1,4,2,5,3],dQ:[2,4,1,3,5,2]});
+  else if(n===2)set({...base,field:[3,2],by:['p','d'],pQ:[5,1,4,2,3,1],dQ:[4,1,3,5,2,4]});
+  else if(n===3)set({...base,field:[4,3],by:['d','p'],pQ:[4,1,3,2,5,1],dQ:[1,2,5,3,4,2]});
+  else if(n===4)set({...base,field:[4,3],by:['d','p'],pQ:[2,5,1,3,4,2],dQ:[1,2,5,3,4,2]});
+  else set({...base,phase:'hold',field:[],by:[]});}
+ const tutStart=()=>{nxStopAudio();nxPrepareAudio();try{resumeAC();}catch(e){}setLevel('easy');set({...sR.current,pPt:0,dPt:0,pSerial:0,dSerial:0});tutGo(0);};
+ const tutEnd=play=>{++tok.current;clearAll();setTut(-1);deadline.current=0;if(play)start();else set({...sR.current,phase:'ready',count:-1,msg:null,field:[],by:[],pPt:0,dPt:0});};
+ // 条件を満たしたら次へ
+ useEffect(()=>{if(tut<0)return;const s=st;
+  if(tut===1&&s.field.length===1){const my=tok.current;at(600,()=>{if(my===tok.current)tutGo(2);});}
+  if(tut===3&&s.pQ[0]!==4&&s.field.length===2){const my=tok.current;at(500,()=>{if(my===tok.current)tutGo(4);});}
+  if(tut===4&&s.field.length===1){const my=tok.current;at(700,()=>{if(my===tok.current)tutGo(5);});}
+ },[st,tut]);
+ const tutTarget=who=>tut===1||tut===2?(who==='head'):tut===3?(who==='head'):false;
  const start=()=>{nxStopAudio();nxPrepareAudio();try{resumeAC();}catch(e){}startRound({pQ:nxDraw([]),dQ:nxDraw([]),pPt:0,dPt:0,pSerial:0,dSerial:0},1);};
  const leave=()=>{wsSend({type:'nxLeave'});sess.current=null;retry.current=null;try{net.current&&net.current.close();}catch(e){}net.current=null;++tok.current;clearAll();nxStopAudio();onBack();};
  const again=()=>{if(online){wsSend({type:'nxRematch'});return;}start();};
@@ -525,7 +562,7 @@ function NextMode({onBack}){
  const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、タップで消す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v,colored:true}));
  const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
   h('span',{className:'nx-next-label '+who},'NEXT'),
-  (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
+  (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&tut>=1&&tut<=3?' nx-tut-glow':'')+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
    {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
  return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
@@ -538,7 +575,7 @@ function NextMode({onBack}){
   h('div',{className:'nx-time'+(st.time<=3&&st.phase==='play'?' low':''),role:'timer','aria-label':'残り '+st.time+' 秒'},h(NxNumber,{value:st.time})),
   queue('d'),
   h('section',{className:'nx-field','aria-label':'場の札'},
-   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
+   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(tut===4&&k===0?' nx-tut-glow':'')+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
 
    // v328: 相手の次の札を、場の次の空き枠にゴースト表示（出せる時だけ）。NX_CFG.ghost:false で消える
    (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:NX_FIELD_X[st.field.length]+'%'},'aria-hidden':true}):null,
@@ -549,6 +586,13 @@ function NextMode({onBack}){
   queue('p'),
   h('div',{ref:trashRef,className:'nx-action discard nx-trash','aria-label':'トラッシュ（札をここへ引っぱると捨てる）'}),
   online&&netNote&&h('div',{className:'nx-net-note',role:'status'},netNote),
+  tut>=0&&h('div',{className:'nx-tut'+(tut===0||tut>=5?' big':''),role:'dialog','aria-label':TUT_TEXT[tut][0]},
+   h('h2',null,TUT_TEXT[tut][0]),
+   h('p',null,TUT_TEXT[tut][1]),
+   h('div',{className:'nx-tut-btns'},
+    tut===0||tut===5?h('button',{onClick:()=>tutGo(tut+1)},'次へ'):null,
+    tut===6?h('button',{onClick:()=>tutEnd(true)},'「やさしい」で遊ぶ'):null,
+    h('button',{className:'nx-tut-skip',onClick:()=>tutEnd(false)},tut===6?'もどる':'やめる'))),
   online&&meterText&&h('div',{className:'nx-meter'},meterText),
   st.count>=0&&h('div',{className:'nx-count',role:'status',key:'count'+st.count},st.count>0?h(NxNumber,{value:st.count}):'GO'),
   st.msg&&(st.msg.points?h(NxCelebration,{message:st.msg,key:'reward-'+st.msg.k}):h('div',{className:'nx-message',role:'status',key:st.msg.k},st.msg.text)),
@@ -561,6 +605,7 @@ function NextMode({onBack}){
    online?[h('button',{key:'rm',onClick:again,disabled:!!(rematch&&rematch.me)},rematch&&rematch.me?'相手を待っています…':rematch&&rematch.op?'もう一度（相手は待っています）':'もう一度'),
      h('button',{key:'ai',className:'nx-home',onClick:toAI},'ひとりで遊ぶ')]:
    [h('div',{key:'lv',className:'nx-levels','aria-label':'相手の強さ'},Object.entries(NX_AI).map(([k,v])=>h('button',{key:k,'aria-pressed':level===k,onClick:()=>setLevel(k)},v.label))),
+   st.phase==='ready'?h('button',{key:'tut',className:'nx-online',onClick:tutStart},'あそびかた（はじめての人）'):null,
    h('button',{key:'st',onClick:start},st.phase==='ready'?'はじめる':'もう一度'),
    h('button',{key:'on',className:'nx-online',onClick:()=>setLobby({step:'menu'})},'友だちと対戦')],
    h('button',{className:'nx-home',onClick:leave},'ホームへ'))),
