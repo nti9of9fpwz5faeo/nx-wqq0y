@@ -103,9 +103,12 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-card.nx-p.nx-head.nx-dragging{transition:none;z-index:40;box-shadow:0 10px 18px #38200670,inset 0 0 0 1px #fff6d0;cursor:grabbing;}
 .nx-trash{pointer-events:none;transition:background .1s,box-shadow .1s;}
 .nx-trash.hot{background:#c9412a33;box-shadow:inset 0 0 0 3px #c9412a99;}
+.nx-ver{position:fixed;right:max(6px,env(safe-area-inset-right));bottom:max(4px,env(safe-area-inset-bottom));font:600 11px sans-serif;color:#5e492d;opacity:.55;z-index:100;pointer-events:none;}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
+// バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
+const APP_VER='v11'; // バージョン表示・自動更新を追加
 const h=React.createElement;
 const{useState,useEffect,useRef,useCallback,useMemo}=React;
 const AC=new(window.AudioContext||window.webkitAudioContext)();
@@ -270,6 +273,7 @@ function NextMode({onBack}){
  function gone(text){if(retry.current&&retry.current.timer)clearTimeout(retry.current.timer);retry.current=null;sess.current=null;setNetNote('');++tok.current;clearAll();setOnline(false);
   set({...sR.current,phase:'end',count:-1,msg:null});setLobby({step:'err',text});}
  // 見張り：メッセージが途切れたら状態をもらい直す／長く途切れたら入り直す。画面が前に戻った時も確認
+ useEffect(()=>{window.__nxBusy=online;},[online]);
  useEffect(()=>{if(!online)return;
   const iv=setInterval(()=>{const gap=Date.now()-lastMsg.current;
    if(retry.current)return;
@@ -483,5 +487,16 @@ function NxBoot(){
   h('div',{className:'nx-loading-bar'},h('i',{style:{width:Math.round(p*100)+'%'}})),
   h('div',{className:'nx-loading-text'},'読み込み中… '+Math.round(p*100)+'%'));
 }
-ReactDOM.createRoot(document.getElementById('root')).render(h(NxBoot));
+// 自動更新：起動時と画面が前に戻った時に version.txt を見て、新しい版があれば読み直す（オンライン対戦中は読み直さない）
+(function(){
+ const KEY='nx-reload-for';let last=0;
+ async function check(){
+  if(window.__nxBusy||Date.now()-last<30000)return;last=Date.now();
+  try{const r=await fetch('version.txt?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+   const v=(await r.text()).trim();if(!v||v===APP_VER||localStorage.getItem(KEY)===v)return;
+   localStorage.setItem(KEY,v);location.replace(location.pathname+'?v='+encodeURIComponent(v));}catch(e){}
+ }
+ check();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});
+})();
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment,null,h(NxBoot),h('div',{className:'nx-ver','aria-hidden':true},APP_VER)));
 </script></body></html>
