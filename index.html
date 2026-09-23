@@ -123,8 +123,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 /* 札 */
 .nx-v2 .nx-card{width:19%;height:14.96%;border:0;border-radius:0;background:url('img/next-v2/card.webp') center/100% 100% no-repeat;box-shadow:none;overflow:visible;}
 .nx-v2 .nx-card:after{display:none;}
-/* v25: 札そのものを青（自分）・赤（相手）に。左上の角タブはなし */
-.nx-v2 .nx-card.nx-p{background-image:url('img/next-v2/card-p.webp');}.nx-v2 .nx-card.nx-d{background-image:url('img/next-v2/card-d.webp');}
+.nx-v2 .nx-card:before{content:'';position:absolute;left:4%;top:3%;width:29%;aspect-ratio:1;background:url('img/next-v2/owner-p.webp') center/contain no-repeat;pointer-events:none;}
+.nx-v2 .nx-card.nx-d:before{background-image:url('img/next-v2/owner-d.webp');}
 .nx-v2 .nx-card .nx-number,.nx-v2 .nx-card.nx-d .nx-number{height:50%;margin-top:0;filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 2px 2px #0002);}
 .nx-v2 .nx-card.nx-head{left:20.5%;}.nx-v2 .nx-card.nx-d.nx-head{top:8.52%;}.nx-v2 .nx-card.nx-p.nx-head{top:64.52%;}
 .nx-v2 .nx-card.nx-preview{width:13%;height:10.24%;opacity:1;}.nx-v2 .nx-preview.nx-d{top:12.08%;}.nx-v2 .nx-preview.nx-p{top:68.08%;}
@@ -158,7 +158,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v25'; // 札の絵を青・赤の新しい札に（角タブ廃止）
+const APP_VER='v26'; // 札を元に戻す（左上の角タブ）。v25の青赤の札は img/next-v2/card-p,d に残してある
+// const APP_VER='v25'; // 札の絵を青・赤の新しい札に（角タブ廃止）
 // const APP_VER='v24'; // 実況の声（ElevenLabs）を控えめに。NX_CFG.voice:false で消える
 // const APP_VER='v23'; // チュートリアル（あそびかた）：触りながら覚える6ステップ
 // const APP_VER='v22'; // 捨てる：下に引っぱって離すだけでOK（ゴミ箱に届かなくていい）
@@ -652,7 +653,7 @@ function NextMode({onBack}){
 }
 // ── 開始前のローディング：画像（背景・札・数字）と音を全部読み終えてから画面を出す
 function nxLoadAll(onProgress){
- const imgs=NX_SKIN==='v2'?['bg','card','card-p','card-d','slot','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
+ const imgs=NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
  const total=imgs.length+1;let done=0;const tick=()=>{done++;onProgress(done/total);};
  const one=src=>new Promise(res=>{const im=new Image();const fin=()=>{tick();res();};im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(fin);};im.onerror=fin;im.src=src;});
  const snd=Promise.resolve(nxPrepareAudio()).catch(()=>{}).then(tick);
