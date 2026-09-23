@@ -138,7 +138,9 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_CFG={pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:10,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
-function nxDraw(q){while(q.length<NX_CFG.queueN+6){const v=Math.floor(Math.random()*5)+1;if(q.length>=2&&q.slice(-2).every(x=>x===v))continue;q.push(v);}return q;}
+// 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
+function nxSoloTen(q,v){let t=v;for(let k=1;k<=3&&q.length-k>=0;k++){t+=q[q.length-k];if(t===10)return true;}return false;}
+function nxDraw(q){while(q.length<NX_CFG.queueN+6){const v=Math.floor(Math.random()*5)+1;if(q.length>=2&&q.slice(-2).every(x=>x===v))continue;if(nxSoloTen(q,v))continue;q.push(v);}return q;}
 function nxLegal(v,f){return Number.isInteger(v)&&v>=1&&v<=5&&f.length<4&&f.reduce((a,b)=>a+b,0)+v<=10&&canPlay(v,f.reduce((a,b)=>a+b,0),f);}
 function nxSum(f){return f.reduce((a,b)=>a+b,0);}
 function nxTarget(sum){return Math.min(NX_STAIR.max,Math.max(10,Math.ceil(sum/10)*10));}
