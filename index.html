@@ -199,8 +199,8 @@ function NxCelebration({message}){
   h('div',{className:'nx-point-flight','aria-hidden':true,style:{'--score-x':message.kind==='p'?'77%':'23%'}},'+',h(NxNumber,{value:message.points})));
 }
 // ── オンライン（Fly.io の tenkuru-server に nx.js を追加。サーバーが判定・時間・山札を持つ）
-// 操作：自分の先頭の札を上に軽くはじく＝出す／左下のトラッシュまで引っぱる＝捨てる。届かなければ元に戻る
-const NX_GESTURE={flickPx:34,flickMs:420,dragPx:70,slopPx:8};
+// 操作：自分の先頭の札をタップ＝出す／左下のトラッシュまで引っぱる＝捨てる。途中で離したら元に戻る（はじく操作はやめた）
+const NX_GESTURE={dragPx:70,slopPx:10};
 const NX_SERVER='wss://4peace-server-vw1ezw.fly.dev';
 function NextMode({onBack}){
  const[st,setSt]=useState(()=>({phase:'ready',pQ:[3,1,4],dQ:[3,2,5],field:[],by:[],pPt:0,dPt:0,rn:0,count:-1,time:nxRoundSec(),msg:null,pSerial:0,dSerial:0,seg:0}));
@@ -212,7 +212,7 @@ function NextMode({onBack}){
  const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
  const clearAll=()=>{timers.current.forEach(clearTimeout);timers.current=[];};
  useEffect(()=>{nxPrepareAudio();return()=>{++tok.current;clearAll();nxStopAudio();try{net.current&&net.current.close();}catch(e){}};},[]);
- // ── 札の操作（はじく＝出す、トラッシュへ＝捨てる）
+ // ── 札の操作（タップ＝出す、トラッシュへ＝捨てる）
  const trashRef=useRef(null),drag=useRef(null);
  function inTrash(x,y){const t=trashRef.current;if(!t)return false;const r=t.getBoundingClientRect(),m=10;return x>=r.left-m&&x<=r.right+m&&y>=r.top-m&&y<=r.bottom+m;}
  function cardDown(e){if(sR.current.phase!=='play')return;const el=e.currentTarget;try{el.setPointerCapture(e.pointerId);}catch(x){}
@@ -225,7 +225,7 @@ function NextMode({onBack}){
   const back=()=>{d.el.classList.remove('nx-dragging');d.el.style.transform='';};
   if(cancel||sR.current.phase!=='play'){back();return;}
   if(inTrash(e.clientX,e.clientY)&&Math.hypot(dx,dy)>=NX_GESTURE.dragPx){back();discard('p');return;}          // トラッシュに落とした
-  if(-dy>=NX_GESTURE.flickPx&&-dy>Math.abs(dx)*1.2&&(ms<=NX_GESTURE.flickMs||-dy>=NX_GESTURE.flickPx*2.5)){back();play('p');return;} // 上にはじいた
+  if(!d.moved){back();play('p');return;}                                                                     // タップ（ほとんど動かしていない）
   back();}                                                                                                   // どちらでもない → 元に戻る
  // ── オンライン（サーバーが正。自分の操作だけ先に画面へ反映して、サーバーの返事で答え合わせ）
  // 時計合わせ：ping の往復で「サーバーの今」を推定（往復が一番短かった回を信用する）
@@ -421,7 +421,7 @@ function NextMode({onBack}){
  const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
-   {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。上にはじくと出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
+   {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
  return h('main',{className:'nx-screen'},h('div',{className:'nx-stage'+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
