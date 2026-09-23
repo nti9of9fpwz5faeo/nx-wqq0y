@@ -158,7 +158,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v23'; // チュートリアル（あそびかた）：触りながら覚える6ステップ
+const APP_VER='v24'; // 実況の声（ElevenLabs）を控えめに。NX_CFG.voice:false で消える
+// const APP_VER='v23'; // チュートリアル（あそびかた）：触りながら覚える6ステップ
 // const APP_VER='v22'; // 捨てる：下に引っぱって離すだけでOK（ゴミ箱に届かなくていい）
 // const APP_VER='v21'; // 1ラウンド20秒に
 // const APP_VER='v20'; // 1ラウンド1回、場の札をタップで消せる（自分・相手とも。NX_CFG.remove）
@@ -204,7 +205,7 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,voice:true,voiceVol:.3,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -232,17 +233,33 @@ const NX_SOUND_FILES={play:'place',discard:'discard',complete:'complete'};
 const NX_AUDIO={buffers:{},pending:null,bus:null,voices:new Set()};
 function nxAudioBus(){if(!NX_AUDIO.bus){const bus=AC.createDynamicsCompressor();bus.threshold.value=-10;bus.knee.value=12;bus.ratio.value=4;bus.attack.value=.003;bus.release.value=.08;bus.connect(AC.destination);NX_AUDIO.bus=bus;}return NX_AUDIO.bus;}
 function nxPrepareAudio(){
+ nxPrepareVoice();
  if(NX_AUDIO.pending)return NX_AUDIO.pending;
  NX_AUDIO.pending=Promise.all(Object.entries(NX_SOUND_FILES).map(async([kind,file])=>{
   if(NX_AUDIO.buffers[kind])return;
   try{const r=await fetch('se/next-v320/'+file+'.mp3');if(!r.ok)throw Error('audio '+r.status);NX_AUDIO.buffers[kind]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){/* A fresh, short local tone handles unavailable audio without a late replay. */}
  })).finally(()=>{NX_AUDIO.pending=null;});return NX_AUDIO.pending;
 }
+// v24 実況の声：se/jikkyo/*.mp3。NX_CFG.voice:false で全部止まる。音量は NX_CFG.voiceVol
+const NX_JK={buf:{},last:{},src:null,at:0,pending:null};
+const NX_JK_FILES=['ten-1','ten-2','last-1','last-2','rev-1','rev-2','reach-1','reach-2','end-1','end-2'];
+function nxPrepareVoice(){if(!NX_CFG.voice||NX_JK.pending)return NX_JK.pending;
+ NX_JK.pending=Promise.all(NX_JK_FILES.map(async f=>{if(NX_JK.buf[f])return;try{const r=await fetch('se/jikkyo/'+f+'.mp3');if(r.ok)NX_JK.buf[f]=await AC.decodeAudioData(await r.arrayBuffer());}catch(e){}})).finally(()=>{NX_JK.pending=null;});return NX_JK.pending;}
+// kind: ten / last / rev / reach / end。しゃべり中は重ねない（end だけは割り込む）。同じ言い方を続けない
+function nxVoice(kind,force=false){try{if(!NX_CFG.voice)return;const now=performance.now();
+ if(NX_JK.src&&!force)return;if(!force&&now-NX_JK.at<900)return;
+ if(NX_JK.src){try{NX_JK.src.stop();}catch(e){}NX_JK.src=null;}
+ const opts=[kind+'-1',kind+'-2'].filter(f=>NX_JK.buf[f]);if(!opts.length)return;
+ const pick=opts.length>1?opts.filter(f=>f!==NX_JK.last[kind])[Math.random()<.8?0:1]||opts[0]:opts[0];NX_JK.last[kind]=pick;
+ resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_JK.buf[pick];g.gain.value=NX_CFG.voiceVol;
+ src.connect(g);g.connect(AC.destination);src.onended=()=>{if(NX_JK.src===src)NX_JK.src=null;src.disconnect();g.disconnect();};
+ NX_JK.src=src;NX_JK.at=now;src.start(AC.currentTime+(kind==='ten'?.12:0));}catch(e){}}
+function nxStopVoice(){if(NX_JK.src){try{NX_JK.src.stop();}catch(e){}NX_JK.src=null;}}
 function nxTrackVoice(source,gain){
  NX_AUDIO.voices.add(source);source.onended=()=>{NX_AUDIO.voices.delete(source);source.disconnect();gain.disconnect();};
  if(NX_AUDIO.voices.size>12){const oldest=NX_AUDIO.voices.values().next().value;try{oldest.stop();}catch(e){}NX_AUDIO.voices.delete(oldest);}
 }
-function nxStopAudio(){for(const source of NX_AUDIO.voices){try{source.stop();}catch(e){}}NX_AUDIO.voices.clear();}
+function nxStopAudio(){nxStopVoice();for(const source of NX_AUDIO.voices){try{source.stop();}catch(e){}}NX_AUDIO.voices.clear();}
 function nxTone(f,{delay=0,d=.12,v=.1,type='sine'}={}){
  const at=AC.currentTime+delay,source=AC.createOscillator(),gain=AC.createGain();source.type=type;source.frequency.setValueAtTime(f,at);
  gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(v,at+.003);gain.gain.exponentialRampToValueAtTime(.0001,at+d);
@@ -289,6 +306,20 @@ function NextMode({onBack}){
  const set=n=>{sR.current=n;setSt(n);};
  const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
  const clearAll=()=>{timers.current.forEach(clearTimeout);timers.current=[];};
+ // v24 実況：点・時間・勝敗の変化を見てしゃべる（チュートリアル中はしゃべらない）
+ const jk=useRef({p:0,d:0,t:99,ph:'',reach:{p:0,d:0}});
+ useEffect(()=>{const J=jk.current,wp=nxWinPt();
+  if(tut>=0){Object.assign(J,{p:st.pPt,d:st.dPt,t:st.time,ph:st.phase});return;}
+  if(st.pPt+st.dPt===0&&J.p+J.d>0)J.reach={p:0,d:0};                         // 新しい試合
+  if(st.phase==='end'&&J.ph!=='end'&&(st.pPt>=wp||st.dPt>=wp))nxVoice('end',true);
+  else if(st.pPt>J.p||st.dPt>J.d){
+   const was=Math.sign(J.p-J.d),now=Math.sign(st.pPt-st.dPt),who=st.pPt>J.p?'p':'d',pt=who==='p'?st.pPt:st.dPt;
+   if(was!==0&&now!==0&&was!==now)nxVoice('rev');                             // 逆転
+   else if(pt>=wp-5&&pt<wp&&!J.reach[who]){J.reach[who]=1;nxVoice('reach');}    // 次の10で勝てるところまで来た
+   else if(Math.random()<.6)nxVoice('ten');}                                    // 毎回はしゃべらない
+  else if(st.phase==='play'&&st.time===5&&J.t>5)nxVoice('last');                // 残り5秒
+  Object.assign(J,{p:st.pPt,d:st.dPt,t:st.time,ph:st.phase});
+ },[st.pPt,st.dPt,st.time,st.phase,tut]);
  useEffect(()=>{nxPrepareAudio();return()=>{++tok.current;clearAll();nxStopAudio();try{net.current&&net.current.close();}catch(e){}};},[]);
  // ── 札の操作（タップ＝出す、トラッシュへ＝捨てる）
  const trashRef=useRef(null),drag=useRef(null);
