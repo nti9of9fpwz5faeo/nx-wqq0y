@@ -139,11 +139,17 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-v2 .nx-action.discard.nx-trash{left:39%;top:86.3%;width:22%;height:12.375%;border-radius:50%;background:url('img/next-v2/trash.webp') center/100% 100% no-repeat;box-shadow:none;}
 .nx-v2 .nx-trash.hot{background-image:url('img/next-v2/trash-hot.webp');box-shadow:none;}
 .nx-v2 .nx-back{left:3%;top:88.5%;background:#ffffffd9;color:#5a3b1c;}
+.nx-rm{position:absolute;top:2.3%;width:7%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font:700 clamp(12px,4vw,20px)/1 sans-serif;color:#fff;box-shadow:0 2px 0 #0004,inset 0 0 0 2px #fff8;z-index:2;transition:opacity .2s,filter .2s;}
+.nx-rm.d{left:34.5%;background:#e2382c;}.nx-rm.p{left:58.5%;background:#1d6fe0;}
+.nx-rm.used{opacity:.35;filter:grayscale(1);}
+.nx-card.nx-removable{cursor:pointer;}
+.nx-card.nx-removable:active{transform:scale(.94);}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v19'; // 新デザイン（アストラ製の素材 next-assets-v2：石のアリーナ・白い札・持ち主の角タブ・丸いゴミ箱）
+const APP_VER='v20'; // 1ラウンド1回、場の札をタップで消せる（自分・相手とも。NX_CFG.remove）
+// const APP_VER='v19'; // 新デザイン（アストラ製の素材 next-assets-v2：石のアリーナ・白い札・持ち主の角タブ・丸いゴミ箱）
 // const APP_VER='v18'; // 20点先取に（AI戦・オンラインとも）
 // const APP_VER='v17'; // 札の数字を数字ごとの色に（1赤 2橙 3青 4紫 5緑、昔のテンクルと同じ）
 // const APP_VER='v16'; // サーバーの50msごとの合図（Wi-Fiを寝かせない）に対応
@@ -184,13 +190,19 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 // skin:'v2' で新デザイン（img/next-v2）。'' で中庭デザインに戻る
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
-const NX_CFG={pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+// remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
 function nxSoloTen(q,v){let t=v;for(let k=1;k<=3&&q.length-k>=0;k++){t+=q[q.length-k];if(t===10)return true;}return false;}
 function nxDraw(q){while(q.length<NX_CFG.queueN+6){const v=Math.floor(Math.random()*5)+1;if(q.length>=2&&q.slice(-2).every(x=>x===v))continue;if(nxSoloTen(q,v))continue;q.push(v);}return q;}
 function nxLegal(v,f){return Number.isInteger(v)&&v>=1&&v<=5&&f.length<4&&f.reduce((a,b)=>a+b,0)+v<=10&&canPlay(v,f.reduce((a,b)=>a+b,0),f);}
+function nxAiRemove(f,v,pv){ // f=場の数字、v=自分の先頭、pv=相手の先頭。消す場所（なければ -1）
+ const without=i=>f.filter((_,j)=>j!==i),S=a=>a.reduce((x,y)=>x+y,0);
+ for(let i=0;i<f.length;i++){const nf=without(i);if(nxLegal(v,nf)&&S(nf)+v===10)return i;}          // 消せば自分が10
+ if(nxLegal(pv,f)&&S(f)+pv===10){for(let i=0;i<f.length;i++){const nf=without(i);if(!(nxLegal(pv,nf)&&S(nf)+pv===10))return i;}} // 相手の10をつぶす
+ return -1;}
 function nxSum(f){return f.reduce((a,b)=>a+b,0);}
 function nxTarget(sum){return Math.min(NX_STAIR.max,Math.max(10,Math.ceil(sum/10)*10));}
 function nxIsTrap(sum){return NX_STAIR.traps.includes(sum)||(NX_STAIR.overIsTrap&&sum>NX_STAIR.max);}
@@ -372,16 +384,16 @@ function NextMode({onBack}){
      else{const now=performance.now();while(M.pend.length&&now-M.pend[0]>3000)M.pend.shift();if(M.pend.length)M.acks.push(Math.round(now-M.pend.shift()));}}} // 自分の操作：押してから返事まで（3秒以上前の押し間違いは捨てる）
    if(m.seq&&m.seq<lastSeq.current)return;if(m.seq)lastSeq.current=m.seq;
    const prev=sR.current,msg=m.msg?{...m.msg,landed:prev.msg&&prev.msg.k===m.msg.k?prev.msg.landed:false}:null,ev=m.ev;
-   const mine=ev&&ev.who==='p'&&(ev.se==='play'||ev.se==='discard')&&prev.pred; // 自分の操作は先に鳴らしてある
+   const mine=ev&&ev.who==='p'&&(ev.se==='play'||ev.se==='discard'||ev.se==='remove')&&prev.pred; // 自分の操作は先に鳴らしてある
    if(m.phase==='count'&&prev.phase!=='count')setRematch(null);
    roughClock(m);
    let tm=m.sched&&(m.phase==='count'||m.phase==='play')?timing(m.sched):{phase:m.phase,count:m.count,time:m.time};
    if(m.phase==='play'&&tm.phase!=='play')tm={phase:'play',count:-1,time:m.time};              // サーバーが始めたら必ず始める
    else if(m.phase==='count'&&tm.phase==='count'&&m.count<tm.count)tm={...tm,count:m.count};  // サーバーの方が先なら数字を合わせる
    if(tm.phase==='play'&&prev.phase==='count'&&prev.rn===m.rn&&prev.count!==0)nxSE('go');
-   set({...prev,pred:0,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
+   set({...prev,pred:0,rmP:!!m.pRm,rmD:!!m.dRm,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
    if(ev){
-    if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);
+    if(ev.se==='timeout')nxSE('timeout');else if((ev.se==='discard'||ev.se==='remove')&&!mine)nxSE('discard',ev.who);
     else if(ev.se==='play'){if(!mine)nxSE('play',ev.who);if(ev.who==='p')setBounce(0);
      if(ev.done){const my=tok.current,k=msg&&msg.k;at(100,()=>{if(my===tok.current)nxSE('complete',ev.who,ev.done);});
       at(830,()=>{const c=sR.current;if(my!==tok.current||!c.msg||c.msg.k!==k)return;set({...c,msg:{...c.msg,landed:true}});nxSE('score',ev.who,ev.done);});}}}
@@ -395,12 +407,15 @@ function NextMode({onBack}){
   else{set({...s,pred:1,pQ:s.pQ.slice(1),pSerial:s.pSerial+1});nxSE('discard','p');}
   meter.current.pend.push(performance.now());if(meter.current.pend.length>8)meter.current.pend.shift(); // 送った時刻
   if(!wsSend({type:'nxAct',a}))resume();}
+ function predictRemove(i){const s=sR.current;if(s.phase!=='play'||s.rmP||i<0||i>=s.field.length)return;
+  set({...s,pred:1,rmP:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('discard','p');
+  meter.current.pend.push(performance.now());if(!wsSend({type:'nxAct',a:'remove',i}))resume();}
  const makeRoom=()=>connect(()=>wsSend({type:'nxCreate'}));
  const joinRoom=()=>{const c=code.replace(/\D/g,'');if(c.length!==4){setLobby({step:'join',err:'4けたの番号を入れてください'});return;}connect(()=>wsSend({type:'nxJoin',code:c}));};
  const cancelLobby=()=>{wsSend({type:'nxLeave'});sess.current=null;setLobby(null);};
  function startRound(base,rn){
   const my=++tok.current;clearAll();let c=NX_CFG.countFrom;
-  set({...base,phase:'count',rn,field:[],by:[],seg:0,count:c,time:nxRoundSec(),msg:null});
+  set({...base,phase:'count',rn,field:[],by:[],seg:0,rmP:false,rmD:false,count:c,time:nxRoundSec(),msg:null});
   const tick=()=>{if(my!==tok.current)return;c--;
    if(c>0){set({...sR.current,count:c});at(NX_CFG.countStepMs,tick);return;}
    set({...sR.current,count:0});nxSE('go');
@@ -460,6 +475,11 @@ function NextMode({onBack}){
   }
   set(n);return true;
  }
+ function removeAt(who,i){ // 場の i 番目を消す（1ラウンド1回）
+  if(!NX_CFG.remove)return false;const s=sR.current,key=who==='p'?'rmP':'rmD';
+  if(onl.current){if(who==='p')predictRemove(i);return false;}
+  if(!active()||s[key]||i<0||i>=s.field.length)return false;
+  set({...s,[key]:true,field:s.field.filter((_,j)=>j!==i),by:s.by.filter((_,j)=>j!==i)});nxSE('discard',who);return true;}
  function discard(who){if(onl.current){if(who==='p')predict('discard');return false;}if(!active())return false;const s=sR.current,key=who==='p'?'pQ':'dQ',serial=who==='p'?'pSerial':'dSerial';
   if(who==='p')setBounce(0);const n={...s,[key]:nxDraw(s[key].slice(1)),[serial]:s[serial]+1};
   if(NX_CFG.pushDiscard){const ok=who==='p'?'dQ':'pQ',os=who==='p'?'dSerial':'pSerial';n[ok]=[s[key][0],...s[ok]].slice(0,NX_CFG.queueN+8);n[os]=s[os]+1;} // v332: 相手の先頭へ
@@ -481,6 +501,7 @@ function NextMode({onBack}){
    const s=sR.current,fs=s.field.reduce((a,b)=>a+b,0),v=s.dQ[0],pv=s.pQ[0],ok=nxLegal(v,s.field);
    const givesTen=ok&&nxLegal(pv,[...s.field,v])&&fs+v+pv===10;
    const threatened=nxLegal(pv,s.field)&&fs+pv===10;
+   if(NX_CFG.remove&&!s.rmD&&!(ok&&fs+v===10)&&Math.random()<ai.read){const i=nxAiRemove(s.field,v,pv);if(i>=0&&removeAt('d',i)){t=setTimeout(step,ai.delay+Math.random()*ai.jitter);return;}}
    if(ok&&fs+v===10)play('d');
    else if(NX_CFG.pushDiscard&&threatened&&Math.random()<ai.read)discard('d'); // v332: 押しつけてこっちの10をつぶす
    else if(nxLegal(s.dQ[1],s.field)&&fs+s.dQ[1]===10&&Math.random()<ai.read)discard('d');
@@ -496,7 +517,7 @@ function NextMode({onBack}){
  const fs=st.field.reduce((a,b)=>a+b,0),canP=st.phase==='play'&&nxCanPut(st.pQ[0],st.field),win=st.pPt>=nxWinPt(),tgt=NX_CFG.stairs?nxTarget(fs):10,trapNext=NX_STAIR.traps.find(x=>x>fs),shownFrom=Math.max(0,st.field.length-4);
  const visibleScore=who=>{const pts=who==='p'?st.pPt:st.dPt;return st.msg?.points&&st.msg.kind===who&&!st.msg.landed?pts-st.msg.points:pts;};
  const scoreClass=who=>'nx-score nx-score-'+who+(st.msg?.landed&&st.msg.kind===who?' nx-earned':'');
- const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、出す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v,colored:true}));
+ const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、タップで消す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v,colored:true}));
  const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
@@ -505,12 +526,14 @@ function NextMode({onBack}){
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
   h('span',{className:'nx-score-label d'},'相手'),
+  NX_CFG.remove&&h('div',{className:'nx-rm d'+(st.rmD?' used':''),'aria-label':st.rmD?'相手は消すを使った':'相手は消すを使える'},'✂'),
+  NX_CFG.remove&&h('div',{className:'nx-rm p'+(st.rmP?' used':''),'aria-label':st.rmP?'消すを使った':'消すを使える'},'✂'),
   h('div',{className:scoreClass('p'),'aria-label':'自分のスコア '+visibleScore('p')},h(NxNumber,{value:visibleScore('p')})),
   h('span',{className:'nx-score-label p'},'自分'),
   h('div',{className:'nx-time'+(st.time<=3&&st.phase==='play'?' low':''),role:'timer','aria-label':'残り '+st.time+' 秒'},h(NxNumber,{value:st.time})),
   queue('d'),
   h('section',{className:'nx-field','aria-label':'場の札'},
-   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card',{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j}});}), // v330: 5枚目からは新しい4枚だけ見せる
+   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
 
    // v328: 相手の次の札を、場の次の空き枠にゴースト表示（出せる時だけ）。NX_CFG.ghost:false で消える
    (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:NX_FIELD_X[st.field.length]+'%'},'aria-hidden':true}):null,
@@ -527,7 +550,7 @@ function NextMode({onBack}){
   (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
    h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
    h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER),
-   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・橙が相手。先に二十点で勝ち。')):
+   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・赤が相手。先に二十点で勝ち。',h('br'),'場の札はタップで1ラウンド1回だけ消せる。')):
     h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
    lobby&&lobby.step==='err'?h('p',{className:'nx-net-err'},lobby.text):null,
    online?[h('button',{key:'rm',onClick:again,disabled:!!(rematch&&rematch.me)},rematch&&rematch.me?'相手を待っています…':rematch&&rematch.op?'もう一度（相手は待っています）':'もう一度'),
