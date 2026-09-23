@@ -104,11 +104,13 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-trash{pointer-events:none;transition:background .1s,box-shadow .1s;}
 .nx-trash.hot{background:#c9412a33;box-shadow:inset 0 0 0 3px #c9412a99;}
 .nx-ver{position:fixed;right:max(6px,env(safe-area-inset-right));bottom:max(4px,env(safe-area-inset-bottom));font:600 11px sans-serif;color:#5e492d;opacity:.55;z-index:100;pointer-events:none;}
+.nx-ver-badge{align-self:center;display:inline-block;margin-top:-6px;padding:3px 12px;border-radius:999px;background:#174f92;color:#fff;font:700 13px/1.4 sans-serif;letter-spacing:.04em;}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
+const APP_VER='v13'; // バージョンをタイトル画面と読み込み画面にはっきり表示
+// const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
 // const APP_VER='v11'; // バージョン表示・自動更新を追加
 const h=React.createElement;
 const{useState,useEffect,useRef,useCallback,useMemo}=React;
@@ -458,6 +460,7 @@ function NextMode({onBack}){
   st.msg&&(st.msg.points?h(NxCelebration,{message:st.msg,key:'reward-'+st.msg.k}):h('div',{className:'nx-message',role:'status',key:st.msg.k},st.msg.text)),
   (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
    h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
+   h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER),
    st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・橙が相手。先に十点で勝ち。')):
     h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
    lobby&&lobby.step==='err'?h('p',{className:'nx-net-err'},lobby.text):null,
@@ -492,7 +495,8 @@ function NxBoot(){
  return h('main',{className:'nx-loading',role:'status','aria-label':'読み込み中'},
   h('div',{className:'nx-loading-title'},'NEXT'),
   h('div',{className:'nx-loading-bar'},h('i',{style:{width:Math.round(p*100)+'%'}})),
-  h('div',{className:'nx-loading-text'},'読み込み中… '+Math.round(p*100)+'%'));
+  h('div',{className:'nx-loading-text'},'読み込み中… '+Math.round(p*100)+'%'),
+  h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER));
 }
 // 自動更新：起動時と画面が前に戻った時に version.txt を見て、新しい版があれば読み直す（オンライン対戦中は読み直さない）
 (function(){
@@ -505,5 +509,5 @@ function NxBoot(){
  }
  check();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});
 })();
-ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment,null,h(NxBoot),h('div',{className:'nx-ver','aria-hidden':true},APP_VER)));
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment,null,h(NxBoot)));
 </script></body></html>
