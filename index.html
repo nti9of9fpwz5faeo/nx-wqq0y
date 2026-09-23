@@ -157,6 +157,61 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-rm.used{opacity:.35;filter:grayscale(1);}
 .nx-card.nx-removable{cursor:pointer;}
 .nx-card.nx-removable:active{transform:scale(.94);}
+/* ── v34 青緑テーブル版。座標はチャッピーの preview.html（540×960）を%に直したもの。数字は文字 ── */
+@font-face{font-family:'NxFredoka';src:url('fonts/fredoka-num.woff2') format('woff2');font-display:block;}
+.nx-screen.nx-teals{background:#16535f;}
+.nx-stage.nx-v2.nx-teal{background-image:url('img/next-teal/background.webp');container-type:inline-size;}
+.nx-teal .nx-txt{display:inline-flex;align-items:center;justify-content:center;height:auto!important;font-family:'NxFredoka','Arial Rounded MT Bold',sans-serif;font-weight:700;line-height:1;filter:none!important;}
+.nx-teal .nx-t-logo{position:absolute;left:35.74%;top:1.15%;width:28.52%;height:4.79%;background:url('img/next-teal/logo-next.webp') center/100% 100% no-repeat;pointer-events:none;}
+.nx-teal .nx-t-goal{position:absolute;left:42.04%;top:7.66%;width:15.93%;height:4.9%;background:url('img/next-teal/pill-goal.webp') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;font:800 2.6cqw/1 sans-serif;color:#51616b;pointer-events:none;}
+.nx-teal .nx-t-tray{position:absolute;left:3.15%;top:44.06%;width:93.7%;height:19.38%;background:url('img/next-teal/field-tray.webp') center/100% 100% no-repeat;pointer-events:none;}
+.nx-teal .nx-t-chev{position:absolute;left:47.5%;top:84.58%;width:5%;height:1.67%;background:url('img/next-teal/icon-chevron-down.webp') center/100% 100% no-repeat;pointer-events:none;}
+.nx-teal .nx-back{left:3%;top:1.2%;width:auto;min-width:40px;background:#fff9ea;color:#1b4b57;border:1px solid #0002;}
+/* 点：自分（青）左、相手（赤）右 */
+.nx-stage.nx-teal .nx-score{top:6.77%;width:35.74%;height:6.67%;padding:0;justify-content:flex-start;}
+.nx-stage.nx-teal .nx-score-p{left:5.46%;right:auto;background-image:url('img/next-teal/score-blue.webp');}
+.nx-stage.nx-teal .nx-score-d{left:58.8%;background-image:url('img/next-teal/score-red.webp');}
+.nx-stage.nx-teal .nx-score .nx-txt{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:7cqw;color:#fff;text-shadow:0 .3cqw 0 #0003;}
+.nx-stage.nx-teal .nx-score-p .nx-txt{left:64%;}.nx-stage.nx-teal .nx-score-d .nx-txt{left:37.6%;}
+/* 時計と合計 */
+.nx-stage.nx-teal .nx-time{left:21.3%;top:37.08%;width:25.93%;height:5.21%;padding:0;background-image:url('img/next-teal/pill-timer.webp');}
+.nx-stage.nx-teal .nx-time .nx-txt{position:absolute;left:65%;top:50%;transform:translate(-50%,-50%);font-size:5cqw;color:#fff9ea;}
+.nx-stage.nx-teal .nx-time.low .nx-txt{color:#ff8a7a;}
+.nx-stage.nx-teal .nx-sum{left:50.56%;top:37.08%;width:29.63%;height:5.21%;padding-left:10%;gap:1.4cqw;justify-content:center;background-image:url('img/next-teal/pill-total.webp');}
+.nx-stage.nx-teal .nx-sum>.nx-txt,.nx-stage.nx-teal .nx-sum .nx-target .nx-txt{font-size:4.6cqw;color:#fff9ea;}
+.nx-stage.nx-teal .nx-sum .nx-target{height:auto;gap:1.4cqw;}.nx-stage.nx-teal .nx-sum .nx-target i{font:700 4.6cqw/1 'NxFredoka',sans-serif;color:#fff9ea;}
+.nx-stage.nx-teal .nx-sum .nx-left{display:none;}
+/* 札：絵は青／赤の札。数字と下線は数字ごとの色 */
+.nx-n1{--c:#F44343;}.nx-n2{--c:#EB7413;}.nx-n3{--c:#0964CF;}.nx-n4{--c:#99399F;}.nx-n5{--c:#078B86;}
+.nx-stage.nx-teal .nx-card{width:20.74%;height:16.35%;container-type:size;background:url('img/next-teal/card-blue.webp') center/100% 100% no-repeat;}
+.nx-stage.nx-teal .nx-card.nx-d{background-image:url('img/next-teal/card-red.webp');}
+.nx-stage.nx-teal .nx-card:before{display:none;}
+.nx-stage.nx-teal .nx-card .nx-txt{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);margin:0;font-size:84cqw;letter-spacing:-.03em;color:var(--c);text-shadow:0 .6cqw 0 #fff8;}
+.nx-stage.nx-teal .nx-card:after{display:block;content:'';position:absolute;left:10.5%;bottom:9.5%;width:79%;height:3.5cqw;border-radius:9px;background:var(--c);top:auto;right:auto;box-shadow:none;}
+.nx-stage.nx-teal .nx-card.nx-head{left:39.63%;}
+.nx-stage.nx-teal .nx-card.nx-d.nx-head{top:18.39%;}.nx-stage.nx-teal .nx-card.nx-p.nx-head{top:66.51%;}
+.nx-stage.nx-teal .nx-card.nx-preview{width:12.41%;height:9.79%;}
+.nx-stage.nx-teal .nx-card.nx-preview-1{left:66.39%;}.nx-stage.nx-teal .nx-card.nx-preview-2{left:82.87%;}
+.nx-stage.nx-teal .nx-preview.nx-d{top:21.67%;}.nx-stage.nx-teal .nx-preview.nx-p{top:69.79%;}
+.nx-stage.nx-teal .nx-card.nx-p.nx-head:not(.nx-to-trash){filter:drop-shadow(0 0 .5cqw #8fd0ff) drop-shadow(0 0 1.6cqw #2f8cff);} /* 先頭の札の青い光（selection_glow の代わり。札の後ろに敷けないため光で表現） */
+/* 場 */
+.nx-stage.nx-teal .nx-field-card,.nx-stage.nx-teal .nx-slot{top:45.26%;width:20.74%;height:16.35%;}
+/* ゴミ箱と ✂ */
+.nx-stage.nx-teal .nx-action.discard.nx-trash{left:41.3%;top:86.67%;width:17.41%;height:10%;border-radius:0;background-image:url('img/next-teal/trash-ready.webp');}
+.nx-stage.nx-teal .nx-trash.hot{background-image:url('img/next-teal/trash-ready.webp');filter:drop-shadow(0 0 2cqw #ff6b5a);}
+.nx-stage.nx-teal .nx-trash.nx-trash-empty{filter:none;background-image:url('img/next-teal/trash-disabled.webp');}
+.nx-stage.nx-teal .nx-dc-left{left:72.3%;right:auto;top:-11.5%;width:40.4%;min-width:0;height:39.6%;padding:0;border:0;border-radius:0;box-shadow:none;background:url('img/next-teal/badge-count.webp') center/100% 100% no-repeat;}
+.nx-stage.nx-teal .nx-dc-left .nx-txt{font-size:3.7cqw;color:#fff9ea;}
+.nx-stage.nx-teal .nx-rm{border-radius:0;box-shadow:none;background:url('img/next-teal/pill-scissors.webp') center/100% 100% no-repeat;aspect-ratio:auto;display:block;}
+.nx-stage.nx-teal .nx-rm span{position:absolute;left:72%;top:50%;transform:translate(-50%,-50%);font:700 4.8cqw/1 'NxFredoka',sans-serif;color:#fff9ea;}
+.nx-stage.nx-teal .nx-rm.p{left:73.33%;top:88.75%;width:20%;height:5%;}
+.nx-stage.nx-teal .nx-rm.d{left:11.48%;top:24.58%;width:15.93%;height:3.96%;}
+.nx-stage.nx-teal .nx-rm.d span{font-size:3.5cqw;}
+.nx-stage.nx-teal .nx-rm.used{opacity:.45;filter:grayscale(.6);}
+/* 数字を使う表示（カウント・得点・結果）も同じ書体に */
+.nx-teal .nx-count .nx-txt{font-size:18cqw;color:#13325b;}
+.nx-teal .nx-role-title .nx-txt{font-size:9cqw;color:#13325b;}.nx-teal .nx-role-points .nx-txt{font-size:13cqw;color:#13325b;}
+.nx-teal .nx-result .nx-txt{font-size:12cqw;color:#13325b;}
 .nx-card.nx-p.nx-head.nx-to-trash{opacity:.75;filter:saturate(.6);} /* 今離すと捨てる */
 .nx-tut{position:absolute;left:4%;right:4%;top:1%;z-index:35;background:#fffdf6f5;border:3px solid #f0b429;border-radius:18px;padding:12px 16px 12px;box-shadow:0 8px 24px #0005;color:#102b57;font:500 15px/1.65 system-ui,sans-serif;white-space:pre-line;}
 .nx-tut.big{top:24%;}
@@ -171,7 +226,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v33'; // 15点先取に
+const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
+// const APP_VER='v33'; // 15点先取に
 // const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
 // const APP_VER='v31'; // 捨てるのは1ラウンド10枚まで（ゴミ箱に残り枚数）
 // const APP_VER='v30'; // 先頭の札をまん中、次の2枚を右はしへ（NX_CFG.side）
@@ -226,7 +282,9 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 // v332: pushDiscard:true で「捨てた札は相手のNEXTの先頭に割り込む」（押しつけ）。false で元どおり消える
 // skin:'v2' で新デザイン（img/next-v2）。'' で中庭デザインに戻る
 const NX_SKIN='v2',NX_V2='img/next-v2/';
-const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
+// v34 青緑テーブル版（img/next-teal、チャッピー素材）。false で v2（石畳）に戻る。数字は画像でなく文字（fonts/fredoka-num.woff2）
+const NX_TEAL=true,NX_T='img/next-teal/';
+const NX_FIELD_X=NX_TEAL?[4.07,27.78,51.48,75.19]:NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
 const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
@@ -250,7 +308,7 @@ function nxWinPt(){return NX_CFG.stairs?NX_STAIR.winPt:NX_CFG.winPt;}
 function nxPoints(f){const r=calcPts(f); // v321: 枚数にかかわらず役を判定（3-3-4がワンペアにならなかった）
 return{total:r.total,label:r.label.split(' +')[0]};}
 // colored：札の数字だけ、数字ごとの色（img/next-v319/digitc-1〜5.webp）
-function NxNumber({value,className='',colored=false}){return h('span',{className:'nx-number '+className+(colored?' nx-colored':''),role:'img','aria-label':String(value)},String(value).split('').map((d,i)=>h('img',{key:i,src:NX_SKIN==='v2'?NX_V2+(colored&&d>='1'&&d<='5'?'dc-':'d-')+d+'.webp':NX_ASSET+(colored&&d>='1'&&d<='5'?'digitc-':'digit-')+d+'.webp',alt:'','aria-hidden':true,draggable:false})));}
+function NxNumber({value,className='',colored=false}){if(NX_TEAL)return h('span',{className:'nx-number nx-txt '+className,role:'img','aria-label':String(value)},String(value));return h('span',{className:'nx-number '+className+(colored?' nx-colored':''),role:'img','aria-label':String(value)},String(value).split('').map((d,i)=>h('img',{key:i,src:NX_SKIN==='v2'?NX_V2+(colored&&d>='1'&&d<='5'?'dc-':'d-')+d+'.webp':NX_ASSET+(colored&&d>='1'&&d<='5'?'digitc-':'digit-')+d+'.webp',alt:'','aria-hidden':true,draggable:false})));}
 // Dedicated NEXT audio: newly generated samples, decoded before the first round.
 const NX_SOUND_FILES={play:'place',discard:'discard',complete:'complete'};
 const NX_AUDIO={buffers:{},pending:null,bus:null,voices:new Set()};
@@ -651,23 +709,24 @@ function NextMode({onBack}){
  const fs=st.field.reduce((a,b)=>a+b,0),canP=st.phase==='play'&&nxCanPut(st.pQ[0],st.field),win=st.pPt>=nxWinPt(),tgt=NX_CFG.stairs?nxTarget(fs):10,trapNext=NX_STAIR.traps.find(x=>x>fs),shownFrom=Math.max(0,st.field.length-4);
  const visibleScore=who=>{const pts=who==='p'?st.pPt:st.dPt;return st.msg?.points&&st.msg.kind===who&&!st.msg.landed?pts-st.msg.points:pts;};
  const scoreClass=who=>'nx-score nx-score-'+who+(st.msg?.landed&&st.msg.kind===who?' nx-earned':'');
- const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、タップで消す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v,colored:true}));
+ const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' nx-n'+v+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、タップで消す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v,colored:true}));
  const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&tut>=1&&tut<=3?' nx-tut-glow':'')+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
    {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
- return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
+ return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')+(NX_TEAL?' nx-teals':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_TEAL?' nx-teal':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
+  NX_TEAL&&[h('div',{key:'logo',className:'nx-t-logo','aria-hidden':true}),h('div',{key:'goal',className:'nx-t-goal','aria-label':nxWinPt()+'点先取'},nxWinPt()+'点先取'),h('div',{key:'tray',className:'nx-t-tray','aria-hidden':true}),h('div',{key:'chev',className:'nx-t-chev','aria-hidden':true})],
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
   h('span',{className:'nx-score-label d'},'相手'),
-  NX_CFG.remove&&h('div',{className:'nx-rm d'+(st.rmD?' used':''),'aria-label':st.rmD?'相手は消すを使った':'相手は消すを使える'},'✂'),
-  NX_CFG.remove&&h('div',{className:'nx-rm p'+(st.rmP?' used':''),'aria-label':st.rmP?'消すを使った':'消すを使える'},'✂'),
+  NX_CFG.remove&&h('div',{className:'nx-rm d'+(st.rmD?' used':''),'aria-label':st.rmD?'相手は消すを使った':'相手は消すを使える'},NX_TEAL?h('span',null,st.rmD?'0':'1'):'✂'),
+  NX_CFG.remove&&h('div',{className:'nx-rm p'+(st.rmP?' used':''),'aria-label':st.rmP?'消すを使った':'消すを使える'},NX_TEAL?h('span',null,st.rmP?'0':'1'):'✂'),
   h('div',{className:scoreClass('p'),'aria-label':'自分のスコア '+visibleScore('p')},h(NxNumber,{value:visibleScore('p')})),
   h('span',{className:'nx-score-label p'},'自分'),
   h('div',{className:'nx-time'+(st.time<=3&&st.phase==='play'?' low':''),role:'timer','aria-label':'残り '+st.time+' 秒'},h(NxNumber,{value:st.time})),
   queue('d'),
   h('section',{className:'nx-field','aria-label':'場の札'},
-   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(tut===4&&k===0?' nx-tut-glow':'')+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
+   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_TEAL?NX_T+'empty-slot.webp':NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(tut===4&&k===0?' nx-tut-glow':'')+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
 
    // v328: 相手の次の札を、場の次の空き枠にゴースト表示（出せる時だけ）。NX_CFG.ghost:false で消える
    (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:NX_FIELD_X[st.field.length]+'%'},'aria-hidden':true}):null,
@@ -714,7 +773,7 @@ function NextMode({onBack}){
 }
 // ── 開始前のローディング：画像（背景・札・数字）と音を全部読み終えてから画面を出す
 function nxLoadAll(onProgress){
- const imgs=NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
+ const imgs=NX_TEAL?['background','card-blue','card-red','empty-slot','field-tray','score-blue','score-red','pill-goal','pill-timer','pill-total','pill-scissors','trash-ready','trash-disabled','badge-count','icon-chevron-down','logo-next','selection-glow'].map(n=>NX_T+n+'.webp'):NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
  const total=imgs.length+1;let done=0;const tick=()=>{done++;onProgress(done/total);};
  const one=src=>new Promise(res=>{const im=new Image();const fin=()=>{tick();res();};im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(fin);};im.onerror=fin;im.src=src;});
  const snd=Promise.resolve(nxPrepareAudio()).catch(()=>{}).then(tick);
