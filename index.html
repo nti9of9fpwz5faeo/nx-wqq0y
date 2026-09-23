@@ -99,6 +99,10 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-loading-bar{width:62%;max-width:280px;height:12px;border-radius:8px;background:#fff8e6;border:2px solid #cfa555;overflow:hidden;box-shadow:inset 0 1px 3px #0002;}
 .nx-loading-bar i{display:block;height:100%;background:linear-gradient(90deg,#287de0,#1252a9);border-radius:6px;transition:width .2s;}
 .nx-loading-text{font:600 14px sans-serif;color:#5e492d;}
+.nx-card.nx-p.nx-head{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;transition:transform .16s ease-out;}
+.nx-card.nx-p.nx-head.nx-dragging{transition:none;z-index:40;box-shadow:0 10px 18px #38200670,inset 0 0 0 1px #fff6d0;cursor:grabbing;}
+.nx-trash{pointer-events:none;transition:background .1s,box-shadow .1s;}
+.nx-trash.hot{background:#c9412a33;box-shadow:inset 0 0 0 3px #c9412a99;}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
@@ -195,6 +199,8 @@ function NxCelebration({message}){
   h('div',{className:'nx-point-flight','aria-hidden':true,style:{'--score-x':message.kind==='p'?'77%':'23%'}},'+',h(NxNumber,{value:message.points})));
 }
 // ── オンライン（Fly.io の tenkuru-server に nx.js を追加。サーバーが判定・時間・山札を持つ）
+// 操作：自分の先頭の札を上に軽くはじく＝出す／左下のトラッシュまで引っぱる＝捨てる。届かなければ元に戻る
+const NX_GESTURE={flickPx:34,flickMs:420,dragPx:70,slopPx:8};
 const NX_SERVER='wss://4peace-server-vw1ezw.fly.dev';
 function NextMode({onBack}){
  const[st,setSt]=useState(()=>({phase:'ready',pQ:[3,1,4],dQ:[3,2,5],field:[],by:[],pPt:0,dPt:0,rn:0,count:-1,time:nxRoundSec(),msg:null,pSerial:0,dSerial:0,seg:0}));
@@ -206,6 +212,21 @@ function NextMode({onBack}){
  const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
  const clearAll=()=>{timers.current.forEach(clearTimeout);timers.current=[];};
  useEffect(()=>{nxPrepareAudio();return()=>{++tok.current;clearAll();nxStopAudio();try{net.current&&net.current.close();}catch(e){}};},[]);
+ // ── 札の操作（はじく＝出す、トラッシュへ＝捨てる）
+ const trashRef=useRef(null),drag=useRef(null);
+ function inTrash(x,y){const t=trashRef.current;if(!t)return false;const r=t.getBoundingClientRect(),m=10;return x>=r.left-m&&x<=r.right+m&&y>=r.top-m&&y<=r.bottom+m;}
+ function cardDown(e){if(sR.current.phase!=='play')return;const el=e.currentTarget;try{el.setPointerCapture(e.pointerId);}catch(x){}
+  drag.current={id:e.pointerId,el,x0:e.clientX,y0:e.clientY,t0:performance.now(),moved:false};el.classList.add('nx-dragging');}
+ function cardMove(e){const d=drag.current;if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.x0,dy=e.clientY-d.y0;
+  if(!d.moved&&Math.hypot(dx,dy)<NX_GESTURE.slopPx)return;d.moved=true;d.el.style.transform='translate('+dx+'px,'+dy+'px)'+(dy<0?' scale(1.04)':'');
+  const hot=inTrash(e.clientX,e.clientY);if(trashRef.current)trashRef.current.classList.toggle('hot',hot);}
+ function cardUp(e,cancel){const d=drag.current;if(!d||d.id!==e.pointerId)return;drag.current=null;
+  const dx=e.clientX-d.x0,dy=e.clientY-d.y0,ms=performance.now()-d.t0,t=trashRef.current;if(t)t.classList.remove('hot');
+  const back=()=>{d.el.classList.remove('nx-dragging');d.el.style.transform='';};
+  if(cancel||sR.current.phase!=='play'){back();return;}
+  if(inTrash(e.clientX,e.clientY)&&Math.hypot(dx,dy)>=NX_GESTURE.dragPx){back();discard('p');return;}          // トラッシュに落とした
+  if(-dy>=NX_GESTURE.flickPx&&-dy>Math.abs(dx)*1.2&&(ms<=NX_GESTURE.flickMs||-dy>=NX_GESTURE.flickPx*2.5)){back();play('p');return;} // 上にはじいた
+  back();}                                                                                                   // どちらでもない → 元に戻る
  // ── オンライン（サーバーが正。自分の操作だけ先に画面へ反映して、サーバーの返事で答え合わせ）
  const sess=useRef(null),lastMsg=useRef(0),lastSeq=useRef(0),retry=useRef(null),[netNote,setNetNote]=useState('');
  function wsSend(o){const w=net.current;if(w&&w.readyState===1){w.send(JSON.stringify(o));return true;}return false;}
@@ -379,7 +400,7 @@ function NextMode({onBack}){
  const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
-   {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onClick:()=>play('p'),disabled:st.phase!=='play'}:{})})));
+   {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。上にはじくと出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
  return h('main',{className:'nx-screen'},h('div',{className:'nx-stage'+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(st.msg?.points?' nx-completed':'')},
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
@@ -397,8 +418,7 @@ function NextMode({onBack}){
     h('span',{className:'nx-left'},h('small',null,'あと'),h(NxNumber,{value:Math.max(0,tgt-fs)}))),
    NX_CFG.stairs&&trapNext?h('div',{className:'nx-trap','aria-label':'地雷 '+trapNext},'💣'+trapNext):null),
   queue('p'),
-  h('button',{className:'nx-action discard','aria-label':'先頭の札を捨てる',disabled:st.phase!=='play',onClick:()=>discard('p')}),
-  h('button',{className:'nx-action play'+(!canP?' blocked':''),'aria-label':'先頭の札を出す','aria-disabled':!canP,disabled:st.phase!=='play',onClick:()=>play('p')}),
+  h('div',{ref:trashRef,className:'nx-action discard nx-trash','aria-label':'トラッシュ（札をここへ引っぱると捨てる）'}),
   online&&netNote&&h('div',{className:'nx-net-note',role:'status'},netNote),
   st.count>=0&&h('div',{className:'nx-count',role:'status',key:'count'+st.count},st.count>0?h(NxNumber,{value:st.count}):'GO'),
   st.msg&&(st.msg.points?h(NxCelebration,{message:st.msg,key:'reward-'+st.msg.k}):h('div',{className:'nx-message',role:'status',key:st.msg.k},st.msg.text)),
