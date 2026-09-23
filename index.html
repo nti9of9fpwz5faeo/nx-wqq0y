@@ -148,7 +148,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v20'; // 1ラウンド1回、場の札をタップで消せる（自分・相手とも。NX_CFG.remove）
+const APP_VER='v21'; // 1ラウンド20秒に
+// const APP_VER='v20'; // 1ラウンド1回、場の札をタップで消せる（自分・相手とも。NX_CFG.remove）
 // const APP_VER='v19'; // 新デザイン（アストラ製の素材 next-assets-v2：石のアリーナ・白い札・持ち主の角タブ・丸いゴミ箱）
 // const APP_VER='v18'; // 20点先取に（AI戦・オンラインとも）
 // const APP_VER='v17'; // 札の数字を数字ごとの色に（1赤 2橙 3青 4紫 5緑、昔のテンクルと同じ）
@@ -191,7 +192,7 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_FIELD_X=NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:20,roundSec:20,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -302,10 +303,10 @@ function NextMode({onBack}){
  function roughClock(m){const c=clock.current;if(c.samples.length||!m.now)return;c.off=m.now-Date.now();} // ping の返事がまだ無い時の仮合わせ
  function warmClock(){[0,120,240,360,480].forEach(ms=>setTimeout(()=>wsSend({type:'nxPing',t:Date.now()}),ms));}
  // 予定表（sched）から、今のカウント・残り時間を自分で計算する
- function timing(sc){const n=srvNow();
-  if(n<sc.t0)return{phase:'count',count:sc.from,time:10};
-  if(n<sc.goAt)return{phase:'count',count:Math.max(1,sc.from-Math.floor((n-sc.t0)/sc.step)),time:10};
-  if(n<sc.playAt)return{phase:'count',count:0,time:10};
+ function timing(sc){const n=srvNow(),full=Math.round((sc.deadline-sc.playAt)/1000);
+  if(n<sc.t0)return{phase:'count',count:sc.from,time:full};
+  if(n<sc.goAt)return{phase:'count',count:Math.max(1,sc.from-Math.floor((n-sc.t0)/sc.step)),time:full};
+  if(n<sc.playAt)return{phase:'count',count:0,time:full};
   return{phase:'play',count:-1,time:Math.max(0,Math.ceil((sc.deadline-n)/1000))};}
  const sess=useRef(null),lastMsg=useRef(0),lastSeq=useRef(0),retry=useRef(null),[netNote,setNetNote]=useState('');
  function wsSend(o){const w=net.current;if(w&&w.readyState===1){w.send(JSON.stringify(o));return true;}return false;}
