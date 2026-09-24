@@ -255,11 +255,21 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-tut-btns .nx-tut-skip{background:transparent;color:#6b5a3a;box-shadow:none;padding:10px 8px;}
 .nx-card.nx-tut-glow{box-shadow:0 0 0 4px #ffd24a,0 0 22px 6px #ffd24acc;border-radius:10%;animation:nx-tut-pulse 1s ease-in-out infinite;z-index:5;}
 @keyframes nx-tut-pulse{50%{box-shadow:0 0 0 6px #ffd24a,0 0 30px 10px #ffd24aee;}}
+/* v36: 追加演出専用レイヤー。ゲームの札・レイアウトには触れない */
+.nx-fx-layer{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden;}
+.nx-fx-win{z-index:9;}
+.nx-land-ripple{position:absolute;border:2px solid var(--ripple-color);border-radius:50%;animation:nx-land-wave .36s ease-out both;}
+@keyframes nx-land-wave{0%{transform:translate(-50%,-50%) scale(.45);opacity:.55}100%{transform:translate(-50%,-50%) scale(1.65);opacity:0}}
+.nx-discard-flight{position:absolute;transform-origin:center;animation:nx-trash-flight .2s cubic-bezier(.4,0,.8,.35) both;}
+@keyframes nx-trash-flight{0%{transform:translate(0,0) scale(1);opacity:1}75%{opacity:.75}100%{transform:translate(var(--trash-dx),var(--trash-dy)) scale(.06);opacity:0}}
+.nx-win-confetti{position:absolute;top:-16px;width:7px;height:11px;border-radius:2px;animation:nx-confetti-fall 1.65s ease-in var(--fall-delay) both;}
+@keyframes nx-confetti-fall{0%{transform:translate(0,-20px) rotate(0deg);opacity:0}8%,75%{opacity:1}100%{transform:translate(var(--fall-x),var(--fall-y)) rotate(var(--fall-turn));opacity:0}}
+@media(prefers-reduced-motion:reduce){.nx-fx-layer{display:none!important;}}
 </style></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v35'; // 青緑版の追加素材：タイトル・結果・ボタン・カウント・10完成・TIME UP・字幕・戻る・番号枠
+const APP_VER='v36'; // 着地の波動・捨てる吸い込みと合成SE・勝利の紙吹雪とファンファーレ
 // const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
 // const APP_VER='v33'; // 15点先取に
 // const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
@@ -286,7 +296,7 @@ const APP_VER='v35'; // 青緑版の追加素材：タイトル・結果・ボ�
 // const APP_VER='v12'; // ゲストがカウント5で止まる対策（サーバーの進みに必ず追いつく）
 // const APP_VER='v11'; // バージョン表示・自動更新を追加
 const h=React.createElement;
-const{useState,useEffect,useRef,useCallback,useMemo}=React;
+const{useState,useEffect,useLayoutEffect,useRef,useCallback,useMemo}=React;
 const AC=new(window.AudioContext||window.webkitAudioContext)();
 function resumeAC(){if(AC.state==='suspended')AC.resume();}
 function canPlay(v,fieldSum,field){
@@ -320,7 +330,8 @@ const NX_SKIN='v2',NX_V2='img/next-v2/';
 const NX_TEAL=true,NX_T='img/next-teal/';
 const NX_FIELD_X=NX_TEAL?[4.07,27.78,51.48,75.19]:NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
-const NX_CFG={remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+// v36: 3つの演出は各スイッチを false で元に戻せる（discardSuction / victoryCelebration は追加SEも切替）。
+const NX_CFG={landRipple:true,discardSuction:true,victoryCelebration:true,remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -407,7 +418,24 @@ function nxSnip(delay,own){const at=AC.currentTime+delay,len=Math.floor(AC.sampl
  for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
  const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();src.buffer=buf;f.type='highpass';f.frequency.value=3500;g.gain.value=.35*own;
  src.connect(f);f.connect(g);g.connect(nxAudioBus());nxTrackVoice(src,g);src.start(at);}
+// v36: 紙が空気を切る短い「シュッ」。既存のSEバスと停止管理を使う。
+function nxDiscardWhoosh(own){
+ const d=.17,at=AC.currentTime,n=Math.ceil(AC.sampleRate*d),b=AC.createBuffer(1,n,AC.sampleRate),data=b.getChannelData(0);
+ for(let i=0;i<n;i++)data[i]=Math.random()*2-1;
+ const src=AC.createBufferSource(),filter=AC.createBiquadFilter(),gain=AC.createGain();src.buffer=b;
+ filter.type='bandpass';filter.Q.value=.65;filter.frequency.setValueAtTime(2800,at);filter.frequency.exponentialRampToValueAtTime(650,at+d);
+ gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.18*own,at+.018);gain.gain.exponentialRampToValueAtTime(.0001,at+d);
+ src.connect(filter);filter.connect(gain);gain.connect(nxAudioBus());nxTrackVoice(src,gain);
+ const ended=src.onended;src.onended=()=>{ended();filter.disconnect();};src.start(at);src.stop(at+d+.01);
+}
+function nxVictoryFanfare(){
+ // 全長1.5秒。実況が主役になる小音量、最後だけ柔らかい和音。
+ [523.25,659.25,783.99,1046.5].forEach((f,i)=>nxTone(f,{delay:.08+i*.17,d:.28,v:.035,type:'triangle'}));
+ [523.25,659.25,1046.5].forEach(f=>nxTone(f,{delay:.82,d:.65,v:.023}));
+}
 function nxSE(kind,who='p',points=1){
+ if(kind==='discard'&&NX_CFG.discardSuction){try{resumeAC();nxDiscardWhoosh(who==='p'?1:.48);}catch(e){}return;}
+ if(kind==='victory'&&NX_CFG.victoryCelebration){try{resumeAC();nxVictoryFanfare();}catch(e){}return;}
  if(kind==='remove'){try{resumeAC();nxRemoveSE(who==='p'?1:.6);}catch(e){}return;}
  try{resumeAC();const own=who==='p'?1:.48,buffer=NX_AUDIO.buffers[kind];
   if(buffer){const source=AC.createBufferSource(),gain=AC.createGain();source.buffer=buffer;
@@ -450,6 +478,48 @@ function NextMode({onBack}){
  const set=n=>{sR.current=n;setSt(n);};
  const at=(ms,f)=>{const t=setTimeout(()=>{timers.current=timers.current.filter(x=>x!==t);f();},ms);timers.current.push(t);return t;};
  const clearAll=()=>{timers.current.forEach(clearTimeout);timers.current=[];};
+ // v36: 一時的な絵だけを専用レイヤーで管理。状態・通信の判定とは独立。
+ const stageRef=useRef(null),fxLayer=useRef(null),winLayer=useRef(null),fxJobs=useRef([]),fxSeen=useRef(new Set()),fxLive=useRef(new Map());
+ function fxReduced(){return !!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
+ function fxOnce(kind,who,rn,serial){const key=[kind,who,rn,serial].join(':');if(fxSeen.current.has(key))return false;
+  fxSeen.current.add(key);if(fxSeen.current.size>64)fxSeen.current.delete(fxSeen.current.values().next().value);return true;}
+ function fxClear(){fxJobs.current=[];for(const [el,t] of fxLive.current){clearTimeout(t);el.remove();}fxLive.current.clear();}
+ function fxMount(el,layer,ms){if(!layer||fxReduced())return;
+  const done=()=>{clearTimeout(fxLive.current.get(el));fxLive.current.delete(el);el.remove();};
+  el.addEventListener('animationend',e=>{if(e.target===el)done();});layer.appendChild(el);fxLive.current.set(el,setTimeout(done,ms));}
+ function landFx(who,slot,rn,serial){if(!NX_CFG.landRipple||fxReduced()||!fxOnce('land',who,rn,serial))return;
+  fxJobs.current.push({who,slot:Math.min(3,Math.max(0,slot))});}
+ function discardFx(who,rn,serial){if(!NX_CFG.discardSuction||fxReduced()||!fxOnce('discard',who,rn,serial))return;
+  const stage=stageRef.current,head=stage&&stage.querySelector('.nx-head.nx-'+who),trash=trashRef.current;if(!head||!trash)return;
+  const a=head.getBoundingClientRect(),b=trash.getBoundingClientRect(),r=stage.getBoundingClientRect();
+  const wrap=document.createElement('div');wrap.className='nx-discard-flight';
+  Object.assign(wrap.style,{left:(a.left-r.left)+'px',top:(a.top-r.top)+'px',width:a.width+'px',height:a.height+'px'});
+  wrap.style.setProperty('--trash-dx',(b.left+b.width/2-a.left-a.width/2)+'px');wrap.style.setProperty('--trash-dy',(b.top+b.height/2-a.top-a.height/2)+'px');
+  const copy=head.cloneNode(true);copy.className='nx-card nx-'+who+' '+Array.from(head.classList).filter(c=>/^nx-n[1-5]$/.test(c)).join(' ');
+  copy.removeAttribute('aria-label');copy.removeAttribute('id');copy.setAttribute('aria-hidden','true');copy.setAttribute('tabindex','-1');
+  copy.style.cssText='position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;transform:none!important;animation:none!important;pointer-events:none!important;';
+  wrap.appendChild(copy);fxMount(wrap,fxLayer.current,260);
+ }
+ // 置いた後のDOMを測るので、消す操作による左詰めや予測表示でも着地点がずれない。
+ useLayoutEffect(()=>{if(['ready','count','end'].includes(st.phase))fxClear();if(st.phase==='ready'||st.phase==='count')fxSeen.current.clear();},[st.rn,st.phase]);
+ useLayoutEffect(()=>{
+  if(['ready','count','end'].includes(st.phase))return;
+  const jobs=fxJobs.current.splice(0),stage=stageRef.current;if(!stage||fxReduced())return;
+  const cards=stage.querySelectorAll('.nx-field-card:not(.nx-ghost)');
+  for(const job of jobs){const card=cards[job.slot];if(!card)continue;const el=document.createElement('i');el.className='nx-land-ripple';
+   Object.assign(el.style,{left:(card.offsetLeft+card.offsetWidth/2)+'px',top:(card.offsetTop+card.offsetHeight/2)+'px',width:card.offsetWidth+'px',height:card.offsetWidth+'px'});
+   el.style.setProperty('--ripple-color',job.who==='p'?'#378ee8':'#e96762');fxMount(el,fxLayer.current,420);}
+ },[st]);
+ useEffect(()=>{if(st.phase!=='end'||st.pPt<nxWinPt()||tut>=0||!NX_CFG.victoryCelebration||fxReduced())return;
+  const stage=stageRef.current;if(!stage)return;const r=stage.getBoundingClientRect();
+  for(let i=0;i<30;i++){const el=document.createElement('i');el.className='nx-win-confetti';
+   Object.assign(el.style,{left:((i*37+11)%100)+'%',background:['#25838b','#fff9ea','#e8bf62'][i%3]});
+   el.style.setProperty('--fall-delay',(i%6)*.045+'s');el.style.setProperty('--fall-x',((i%7)-3)*14+'px');
+   el.style.setProperty('--fall-y',(r.height+36)+'px');el.style.setProperty('--fall-turn',(i%2?1:-1)*(240+i*17)+'deg');fxMount(el,winLayer.current,2000);}
+ },[st.phase]);
+ useEffect(()=>{const media=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'),change=()=>{if(media.matches)fxClear();};
+  if(media&&media.addEventListener)media.addEventListener('change',change);
+  return()=>{fxClear();if(media&&media.removeEventListener)media.removeEventListener('change',change);};},[]);
  // v24 実況：点・時間・勝敗の変化を見てしゃべる（チュートリアル中はしゃべらない）
  const[callout,setCallout]=useState(null);
  useEffect(()=>{let t;NX_JK.onSay=(kind,pick)=>{const txt=NX_JK_TEXT[pick];if(!txt||sR.current.phase==='play')return;clearTimeout(t);setCallout({txt,k:Date.now(),end:kind==='end'});t=setTimeout(()=>setCallout(null),1500);};return()=>{NX_JK.onSay=null;clearTimeout(t);};},[]);
@@ -485,7 +555,7 @@ function NextMode({onBack}){
   const dx=e.clientX-d.x0,dy=e.clientY-d.y0,ms=performance.now()-d.t0,t=trashRef.current;if(t)t.classList.remove('hot');
   const back=()=>{d.el.classList.remove('nx-dragging','nx-to-trash');d.el.style.transform='';};
   if(cancel||sR.current.phase!=='play'){back();return;}
-  if(d.moved&&wantTrash(d,e.clientX,e.clientY)){back();discard('p');return;}                                   // 下に引っぱった／ゴミ箱の上 → 捨てる
+  if(d.moved&&wantTrash(d,e.clientX,e.clientY)){discard('p');back();return;}                                   // 下に引っぱった／ゴミ箱の上 → 捨てる
   if(!d.moved){back();play('p');return;}                                                                     // タップ（ほとんど動かしていない）
   back();}                                                                                                   // どちらでもない → 元に戻る
  // ── オンライン（サーバーが正。自分の操作だけ先に画面へ反映して、サーバーの返事で答え合わせ）
@@ -588,6 +658,9 @@ function NextMode({onBack}){
    if(m.phase==='play'&&tm.phase!=='play')tm={phase:'play',count:-1,time:m.time};              // サーバーが始めたら必ず始める
    else if(m.phase==='count'&&tm.phase==='count'&&m.count<tm.count)tm={...tm,count:m.count};  // サーバーの方が先なら数字を合わせる
    if(tm.phase==='play'&&prev.phase==='count'&&prev.rn===m.rn&&prev.count!==0)nxSE('go');
+   // 相手側はサーバーの ev.se で発火。自分の先読み分はラウンド＋札通番で重複を防ぐ。
+   if(ev&&ev.se==='play')landFx(ev.who,m.field.length-1,m.rn,ev.who==='p'?m.pSerial:m.dSerial);
+   if(ev&&ev.se==='discard')discardFx(ev.who,m.rn,ev.who==='p'?m.pSerial:m.dSerial);
    set({...prev,pred:0,rmP:!!m.pRm,rmD:!!m.dRm,dcP:m.pDc|0,dcD:m.dDc|0,sched:m.sched,srvPhase:m.phase,srvCount:m.count,phase:tm.phase,rn:m.rn,count:tm.count,time:tm.time,field:m.field,by:m.by,pQ:m.pQ,dQ:m.dQ,pPt:m.pPt,dPt:m.dPt,pSerial:m.pSerial,dSerial:m.dSerial,msg});
    if(ev){
     if(ev.se==='timeout')nxSE('timeout');else if(ev.se==='discard'&&!mine)nxSE('discard',ev.who);else if(ev.se==='remove'&&!mine)nxSE('remove',ev.who);
@@ -600,8 +673,10 @@ function NextMode({onBack}){
  // 先読み：自分の「出す／捨てる」はサーバーの返事を待たずに画面を動かす（違っていたら次の状態で直る）
  function predict(a){const s=sR.current;if(s.phase!=='play')return;const v=s.pQ[0];
   if(a==='play'){if(!nxLegal(v,s.field)){setBounce(n=>n+1);nxSE('reject');return;}
+   landFx('p',s.field.length,s.rn,s.pSerial+1);
    set({...s,pred:1,field:[...s.field,v],by:[...s.by,'p'],pQ:s.pQ.slice(1),pSerial:s.pSerial+1});setBounce(0);nxSE('play','p');}
   else{if((s.dcP|0)>=NX_CFG.discardMax){setBounce(n=>n+1);nxSE('reject');return;} // 捨てるのは1ラウンド discardMax 枚まで
+   discardFx('p',s.rn,s.pSerial+1);
    set({...s,pred:1,dcP:(s.dcP|0)+1,pQ:s.pQ.slice(1),pSerial:s.pSerial+1});nxSE('discard','p');}
   meter.current.pend.push(performance.now());if(meter.current.pend.length>8)meter.current.pend.shift(); // 送った時刻
   if(!wsSend({type:'nxAct',a}))resume();}
@@ -635,6 +710,7 @@ function NextMode({onBack}){
   if(!nxLegal(v,s.field)){if(who==='p'){setBounce(n=>n+1);nxSE('reject');}return false;}
   const nq=nxDraw(q.slice(1)),nf=[...s.field,v],n={...s,field:nf,by:[...s.by,who]};
   n[who==='p'?'pQ':'dQ']=nq;n[who==='p'?'pSerial':'dSerial']++;
+  landFx(who,nf.length-1,s.rn,n[who==='p'?'pSerial':'dSerial']);
   if(who==='p')setBounce(0);nxSE('play',who);
   if(nf.reduce((a,b)=>a+b,0)===10){
    const r=nxPoints(nf);n[who==='p'?'pPt':'dPt']+=r.total;n.phase='hold';n.msg={k:s.rn,text:r.label,points:r.total,kind:who,landed:false};
@@ -657,6 +733,7 @@ function NextMode({onBack}){
   const before=nxSum(s.field),nf=[...s.field,v],sum=before+v,n={...s,field:nf,by:[...s.by,who]};
   n[who==='p'?'pQ':'dQ']=nxDraw(q.slice(1));n[who==='p'?'pSerial':'dSerial']++;
   if(nxTarget(sum)>nxTarget(before)&&!nxIsExact(before))n.seg=nf.length-1; // 目標が上がった札から新しい段
+  landFx(who,nf.length-1,s.rn,n[who==='p'?'pSerial':'dSerial']);
   if(who==='p')setBounce(0);nxSE('play',who);
   const me=who==='p'?'pPt':'dPt',op=who==='p'?'dPt':'pPt';
   if(nxIsTrap(sum)){
@@ -683,7 +760,7 @@ function NextMode({onBack}){
   if(tutR.current<0&&(s[dk]|0)>=NX_CFG.discardMax){if(who==='p'){setBounce(n=>n+1);nxSE('reject');}return false;} // 捨てるのは1ラウンド discardMax 枚まで
   if(who==='p')setBounce(0);const n={...s,[dk]:(s[dk]|0)+1,[key]:nxDraw(s[key].slice(1)),[serial]:s[serial]+1};
   if(NX_CFG.pushDiscard){const ok=who==='p'?'dQ':'pQ',os=who==='p'?'dSerial':'pSerial';n[ok]=[s[key][0],...s[ok]].slice(0,NX_CFG.queueN+8);n[os]=s[os]+1;} // v332: 相手の先頭へ
-  set(n);nxSE('discard',who);return true;
+  discardFx(who,s.rn,n[serial]);set(n);nxSE('discard',who);return true;
  }
 
  // v330: 段ルールの相手。地雷はふむ前に読む／ぴったりは取る／こっちにぴったりを渡さない
@@ -748,7 +825,9 @@ function NextMode({onBack}){
   h('span',{className:'nx-next-label '+who},'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&tut>=1&&tut<=3?' nx-tut-glow':'')+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
    {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
- return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')+(NX_TEAL?' nx-teals':'')},h('div',{className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_TEAL?' nx-teal':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
+ return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')+(NX_TEAL?' nx-teals':'')},h('div',{ref:stageRef,className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_TEAL?' nx-teal':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
+  h('div',{ref:fxLayer,className:'nx-fx-layer','aria-hidden':true}),
+  h('div',{ref:winLayer,className:'nx-fx-layer nx-fx-win','aria-hidden':true}),
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   NX_TEAL&&[h('div',{key:'logo',className:'nx-t-logo','aria-hidden':true}),h('div',{key:'goal',className:'nx-t-goal','aria-label':nxWinPt()+'点先取'},nxWinPt()+'点先取'),h('div',{key:'tray',className:'nx-t-tray','aria-hidden':true}),h('div',{key:'chev',className:'nx-t-chev','aria-hidden':true})],
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
