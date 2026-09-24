@@ -166,7 +166,6 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-teal .nx-t-goal{position:absolute;left:42.04%;top:7.66%;width:15.93%;height:4.9%;background:url('img/next-teal/pill-goal.webp') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;font:800 2.6cqw/1 sans-serif;color:#51616b;pointer-events:none;}
 .nx-teal .nx-t-tray{position:absolute;left:3.15%;top:44.06%;width:93.7%;height:19.38%;background:url('img/next-teal/field-tray.webp') center/100% 100% no-repeat;pointer-events:none;}
 .nx-teal .nx-t-chev{position:absolute;left:47.5%;top:84.58%;width:5%;height:1.67%;background:url('img/next-teal/icon-chevron-down.webp') center/100% 100% no-repeat;pointer-events:none;}
-.nx-teal .nx-back{left:3%;top:1.2%;width:auto;min-width:40px;background:#fff9ea;color:#1b4b57;border:1px solid #0002;}
 /* 点：自分（青）左、相手（赤）右 */
 .nx-stage.nx-teal .nx-score{top:6.77%;width:35.74%;height:6.67%;padding:0;justify-content:flex-start;}
 .nx-stage.nx-teal .nx-score-p{left:5.46%;right:auto;background-image:url('img/next-teal/score-blue.webp');}
@@ -212,6 +211,40 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-teal .nx-count .nx-txt{font-size:18cqw;color:#13325b;}
 .nx-teal .nx-role-title .nx-txt{font-size:9cqw;color:#13325b;}.nx-teal .nx-role-points .nx-txt{font-size:13cqw;color:#13325b;}
 .nx-teal .nx-result .nx-txt{font-size:12cqw;color:#13325b;}
+/* ── v35 青緑版の追加素材（パネル・ボタン・カウント・帯・字幕・戻る・番号枠） ── */
+.nx-teal .nx-overlay{background:#0a2a3259;}
+.nx-teal .nx-dialog{background:none;box-shadow:none;border-radius:0;border:20px solid transparent;border-image:url('img/next-teal/dialog-panel.webp') 48 fill / 20px stretch;padding:8px 2px;color:#16535f;filter:drop-shadow(0 6px 14px #0004);}
+.nx-teal .nx-dialog p{font-size:13px;line-height:1.65;}
+.nx-teal .nx-dialog h1{font:800 30px/1.2 'NxFredoka','Noto Sans JP',sans-serif;color:#16535f;letter-spacing:.06em;}
+.nx-teal .nx-dialog button{background:none;border:0 solid transparent;border-radius:0;box-shadow:none;min-height:50px;border-width:0 18px;border-image:url('img/next-teal/btn-primary.webp') 0 60 fill / 0 18px stretch;color:#fff9ea;font-weight:800;}
+.nx-teal .nx-dialog button:active{transform:scale(.97);}
+.nx-teal .nx-dialog button:disabled{filter:grayscale(.5) opacity(.7);}
+.nx-teal .nx-dialog .nx-online{border-width:0 25px;border-image:url('img/next-teal/btn-secondary.webp') 0 95 fill / 0 25px stretch;color:#16535f;}
+.nx-teal .nx-dialog .nx-home{border:0;border-image:none;background:none;color:#16535f;text-decoration:underline;text-underline-offset:4px;min-height:40px;}
+.nx-teal .nx-dialog .nx-bgm-btn{border-width:0 16px;border-image:url('img/next-teal/btn-level-off.webp') 0 76 fill / 0 16px stretch;background:none;color:#16535f;min-height:34px;padding:2px 6px;}
+.nx-teal .nx-levels button{min-height:42px;padding:4px 0;white-space:nowrap;font-size:13px;border-width:0 13px;border-image:url('img/next-teal/btn-level-off.webp') 0 76 fill / 0 13px stretch;color:#16535f;}
+.nx-teal .nx-levels button[aria-pressed="true"]{border-image-source:url('img/next-teal/btn-level-on.webp');color:#fff9ea;}
+.nx-teal .nx-ver-badge{background:#16535f;color:#fff9ea;}
+.nx-teal .nx-code{margin:0 auto;width:80%;aspect-ratio:3.45;display:flex;align-items:center;justify-content:center;background:url('img/next-teal/code-box.webp') center/100% 100% no-repeat;font:700 40px/1 'NxFredoka',sans-serif;letter-spacing:.2em;padding:0 0 0 .2em;color:#16535f;}
+.nx-teal .nx-code-input{width:80%;margin:0 auto;aspect-ratio:3.45;border:0;border-radius:0;background:url('img/next-teal/code-box.webp') center/100% 100% no-repeat;font:700 34px/1 'NxFredoka',sans-serif;color:#16535f;outline:none;}
+.nx-teal .nx-result{color:#16535f;}
+/* カウント */
+.nx-teal .nx-count{width:34%;height:auto;min-width:0;aspect-ratio:1;padding:0;border:0;border-radius:0;box-shadow:none;background:url('img/next-teal/count-badge.webp') center/100% 100% no-repeat;font:700 15cqw/1 'NxFredoka',sans-serif;color:#16535f;filter:drop-shadow(0 4px 10px #0004);}
+.nx-teal .nx-count .nx-txt{font-size:18cqw;color:#16535f;}
+/* TIME UP などの帯 */
+.nx-teal .nx-message{width:78%;height:auto;aspect-ratio:5.8;padding:0;border:0;border-radius:0;box-shadow:none;background:url('img/next-teal/banner-timeup.webp') center/100% 100% no-repeat;font:700 6cqw/1 'NxFredoka',sans-serif;letter-spacing:.06em;color:#fff9ea;}
+/* 10完成：金の帯に「役名 ＋点」を1行で */
+.nx-teal .nx-reward-banner{left:5%;width:90%;min-height:0;height:auto;aspect-ratio:5;top:40%;padding:0 12%;flex-direction:row;gap:4%;border:0;border-radius:0;box-shadow:none;background:url('img/next-teal/banner-reward.webp') center/100% 100% no-repeat;filter:drop-shadow(0 0 12px #ffd86a99);}
+.nx-teal .nx-role-title{font-size:6.2cqw;text-shadow:none;white-space:nowrap;}
+.nx-teal .nx-role-title .nx-txt{font-size:7cqw;color:inherit;}
+.nx-teal .nx-role-points,.nx-teal .nx-celebration.big .nx-role-points{height:auto;font:700 8cqw/1 'NxFredoka',sans-serif;}
+.nx-teal .nx-role-points .nx-txt{font-size:10cqw;color:inherit;}
+.nx-teal .nx-point-flight .nx-txt{font-size:6cqw;}
+/* 実況字幕 */
+.nx-teal .nx-callout span{background:none;border:0 solid transparent;border-width:0 5cqw;border-image:url('img/next-teal/callout-ribbon.webp') 0 80 fill / 0 5cqw stretch;padding:.35em .3em;transform:none;text-shadow:0 2px 0 #0b2a33;font-family:'NxFredoka','NxLilita',sans-serif;font-weight:700;}
+@keyframes nx-callout{0%{opacity:0;transform:translateX(-40%) scale(1.1);}14%{opacity:1;transform:none;}80%{opacity:1;transform:none;}100%{opacity:0;transform:translateX(30%);}}
+/* 戻る */
+.nx-stage.nx-teal .nx-back{left:4%;top:1%;width:8%;min-width:0;height:auto;aspect-ratio:1.41;padding:0;border:0;border-radius:0;box-shadow:none;background:url('img/next-teal/icon-back.webp') center/100% 100% no-repeat;color:transparent;font-size:0;}
 .nx-card.nx-p.nx-head.nx-to-trash{opacity:.75;filter:saturate(.6);} /* 今離すと捨てる */
 .nx-tut{position:absolute;left:4%;right:4%;top:1%;z-index:35;background:#fffdf6f5;border:3px solid #f0b429;border-radius:18px;padding:12px 16px 12px;box-shadow:0 8px 24px #0005;color:#102b57;font:500 15px/1.65 system-ui,sans-serif;white-space:pre-line;}
 .nx-tut.big{top:24%;}
@@ -226,7 +259,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
+const APP_VER='v35'; // 青緑版の追加素材：タイトル・結果・ボタン・カウント・10完成・TIME UP・字幕・戻る・番号枠
+// const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
 // const APP_VER='v33'; // 15点先取に
 // const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
 // const APP_VER='v31'; // 捨てるのは1ラウンド10枚まで（ゴミ箱に残り枚数）
@@ -773,7 +807,7 @@ function NextMode({onBack}){
 }
 // ── 開始前のローディング：画像（背景・札・数字）と音を全部読み終えてから画面を出す
 function nxLoadAll(onProgress){
- const imgs=NX_TEAL?['background','card-blue','card-red','empty-slot','field-tray','score-blue','score-red','pill-goal','pill-timer','pill-total','pill-scissors','trash-ready','trash-disabled','badge-count','icon-chevron-down','logo-next','selection-glow'].map(n=>NX_T+n+'.webp'):NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
+ const imgs=NX_TEAL?['background','card-blue','card-red','empty-slot','field-tray','score-blue','score-red','pill-goal','pill-timer','pill-total','pill-scissors','trash-ready','trash-disabled','badge-count','icon-chevron-down','logo-next','selection-glow','dialog-panel','btn-primary','btn-secondary','btn-level-on','btn-level-off','count-badge','banner-reward','banner-timeup','callout-ribbon','icon-back','code-box'].map(n=>NX_T+n+'.webp'):NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
  const total=imgs.length+1;let done=0;const tick=()=>{done++;onProgress(done/total);};
  const one=src=>new Promise(res=>{const im=new Image();const fin=()=>{tick();res();};im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(fin);};im.onerror=fin;im.src=src;});
  const snd=Promise.resolve(nxPrepareAudio()).catch(()=>{}).then(tick);
