@@ -269,7 +269,8 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v36'; // 着地の波動・捨てる吸い込みと合成SE・勝利の紙吹雪とファンファーレ
+const APP_VER='v37'; // 5・4・3・2・1・GO は最初のラウンドだけ
+// const APP_VER='v36'; // 着地の波動・捨てる吸い込みと合成SE・勝利の紙吹雪とファンファーレ
 // const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
 // const APP_VER='v33'; // 15点先取に
 // const APP_VER='v32'; // 勝った時に GAME OVER! と言わないように／通信・描画の時間の表示を消す
@@ -570,7 +571,7 @@ function NextMode({onBack}){
  function warmClock(){[0,120,240,360,480].forEach(ms=>setTimeout(()=>wsSend({type:'nxPing',t:Date.now()}),ms));}
  // 予定表（sched）から、今のカウント・残り時間を自分で計算する
  function timing(sc){const n=srvNow(),full=Math.round((sc.deadline-sc.playAt)/1000);
-  if(n<sc.t0)return{phase:'count',count:sc.from,time:full};
+  if(n<sc.t0)return{phase:'count',count:sc.from>0?sc.from:-1,time:full};
   if(n<sc.goAt)return{phase:'count',count:Math.max(1,sc.from-Math.floor((n-sc.t0)/sc.step)),time:full};
   if(n<sc.playAt)return{phase:'count',count:0,time:full};
   return{phase:'play',count:-1,time:Math.max(0,Math.ceil((sc.deadline-n)/1000))};}
@@ -688,6 +689,8 @@ function NextMode({onBack}){
  const cancelLobby=()=>{wsSend({type:'nxLeave'});sess.current=null;setLobby(null);};
  function startRound(base,rn){
   const my=++tok.current;clearAll();let c=NX_CFG.countFrom;
+  // v37 5・4・3・2・1・GO は最初のラウンドだけ。2ラウンド目からはすぐ始まる
+  if(rn>1){deadline.current=performance.now()+nxRoundSec()*1000;set({...base,phase:'play',rn,field:[],by:[],seg:0,rmP:false,rmD:false,dcP:0,dcD:0,count:-1,time:nxRoundSec(),msg:null});runTimer(my);return;}
   set({...base,phase:'count',rn,field:[],by:[],seg:0,rmP:false,rmD:false,dcP:0,dcD:0,count:c,time:nxRoundSec(),msg:null});
   const tick=()=>{if(my!==tok.current)return;c--;
    if(c>0){set({...sR.current,count:c});at(NX_CFG.countStepMs,tick);return;}
