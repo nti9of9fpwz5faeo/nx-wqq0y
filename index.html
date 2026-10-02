@@ -265,11 +265,11 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 .nx-win-confetti{position:absolute;top:-16px;width:7px;height:11px;border-radius:2px;animation:nx-confetti-fall 1.65s ease-in var(--fall-delay) both;}
 @keyframes nx-confetti-fall{0%{transform:translate(0,-20px) rotate(0deg);opacity:0}8%,75%{opacity:1}100%{transform:translate(var(--fall-x),var(--fall-y)) rotate(var(--fall-turn));opacity:0}}
 @media(prefers-reduced-motion:reduce){.nx-fx-layer{display:none!important;}}
-</style></head><body><div id="root"></div>
+</style><link rel="stylesheet" href="workshop.css?v38"></head><body><div id="root"></div>
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v37'; // 5・4・3・2・1・GO は最初のラウンドだけ
+const APP_VER='v38'; // 魔法のカード工房：見た目のみ変更（ルール・AI・音は維持）
 // const APP_VER='v36'; // 着地の波動・捨てる吸い込みと合成SE・勝利の紙吹雪とファンファーレ
 // const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
 // const APP_VER='v33'; // 15点先取に
@@ -329,6 +329,9 @@ const NX_STAIR={max:50,traps:[11,22,33,44],bonus:{10:1,20:2,30:3,40:4,50:5},over
 const NX_SKIN='v2',NX_V2='img/next-v2/';
 // v34 青緑テーブル版（img/next-teal、チャッピー素材）。false で v2（石畳）に戻る。数字は画像でなく文字（fonts/fredoka-num.woff2）
 const NX_TEAL=true,NX_T='img/next-teal/';
+const NX_WORKSHOP_ASSETS=['img/workshop/table.webp','img/workshop/card.webp'];
+function nxWorkshopSaved(){try{return localStorage.getItem('nxSkin')!=='teal';}catch(e){return true;}}
+function NxWorkshopIcon({kind}){return h('svg',{viewBox:'0 0 32 32','aria-hidden':true,fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},kind==='trash'?[h('path',{key:0,d:'M6 9h20M12 9V5h8v4M8 9l2 18h12l2-18M14 13v9M18 13v9'})]:[h('circle',{key:0,cx:8,cy:24,r:4}),h('circle',{key:1,cx:24,cy:24,r:4}),h('path',{key:2,d:'M11 21L25 4M21 21L7 4'})]);}
 const NX_FIELD_X=NX_TEAL?[4.07,27.78,51.48,75.19]:NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
 // v36: 3つの演出は各スイッチを false で元に戻せる（discardSuction / victoryCelebration は追加SEも切替）。
@@ -470,6 +473,8 @@ function NxCelebration({message}){
 const NX_GESTURE={dragPx:70,slopPx:10,downRate:.45}; // downRate：札の高さの何割、下に引っぱったら「捨てる」になるか
 const NX_SERVER='wss://4peace-server-vw1ezw.fly.dev';
 function NextMode({onBack}){
+ const[workshop,setWorkshop]=useState(nxWorkshopSaved);
+ function toggleSkin(){const next=!workshop;setWorkshop(next);try{localStorage.setItem('nxSkin',next?'workshop':'teal');}catch(e){}}
  const[st,setSt]=useState(()=>({phase:'ready',pQ:[3,1,4],dQ:[3,2,5],field:[],by:[],pPt:0,dPt:0,rn:0,count:-1,time:nxRoundSec(),msg:null,pSerial:0,dSerial:0,seg:0}));
  const[level,setLevel]=useState('normal'),[bounce,setBounce]=useState(0);
  const[lobby,setLobby]=useState(null),[online,setOnline]=useState(false),[rematch,setRematch]=useState(null),[code,setCode]=useState('');
@@ -825,24 +830,24 @@ function NextMode({onBack}){
  const scoreClass=who=>'nx-score nx-score-'+who+(st.msg?.landed&&st.msg.kind===who?' nx-earned':'');
  const card=(v,who,extra,props={})=>h(props.onClick?'button':'div',{...props,className:'nx-card nx-'+who+' nx-n'+v+' '+extra,'aria-label':(who==='p'?'自分':'相手')+'の札 '+v+(props.onClick?'、タップで消す':''),type:props.onClick?'button':undefined},h(NxNumber,{value:v,colored:true}));
  const queue=who=>h('section',{'aria-label':who==='p'?'自分の次の札':'相手の次の札'},
-  h('span',{className:'nx-next-label '+who},'NEXT'),
+   h('span',{className:'nx-next-label '+who},workshop?(who==='p'?'あなた':'相手'):'NEXT'),
   (who==='p'?st.pQ:st.dQ).slice(0,3).map((v,i)=>card(v,who,i===0?'nx-head'+(who==='p'&&tut>=1&&tut<=3?' nx-tut-glow':'')+(who==='p'&&bounce?' nx-reject':' nx-discarding'):'nx-preview nx-preview-'+i,
    {key:who+'-'+i+'-'+(who==='p'?st.pSerial:st.dSerial)+(i===0&&who==='p'?'-'+bounce:''),...(i===0&&who==='p'?{onPointerDown:cardDown,onPointerMove:cardMove,onPointerUp:e=>cardUp(e,false),onPointerCancel:e=>cardUp(e,true),'aria-label':'自分の札 '+v+'。タップで出す、左下のトラッシュへ引っぱると捨てる'}:{})})));
- return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')+(NX_TEAL?' nx-teals':'')},h('div',{ref:stageRef,className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_TEAL?' nx-teal':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
+  return h('main',{className:'nx-screen'+(NX_SKIN==='v2'?' nx-v2s':'')+(NX_TEAL?' nx-teals':'')+(workshop?' nx-workshop-screen':'')},h('div',{ref:stageRef,className:'nx-stage'+(NX_SKIN==='v2'?' nx-v2':'')+(NX_TEAL?' nx-teal':'')+(workshop?' nx-workshop':'')+(NX_CFG.mat?'':' nx-nomat')+(NX_CFG.row?' nx-row':'')+(NX_CFG.side?' nx-side':'')+(st.msg?.points?' nx-completed':'')},
   h('div',{ref:fxLayer,className:'nx-fx-layer','aria-hidden':true}),
   h('div',{ref:winLayer,className:'nx-fx-layer nx-fx-win','aria-hidden':true}),
   h('button',{className:'nx-back',onClick:leave,'aria-label':'ホームへ戻る'},'‹'),
   NX_TEAL&&[h('div',{key:'logo',className:'nx-t-logo','aria-hidden':true}),h('div',{key:'goal',className:'nx-t-goal','aria-label':nxWinPt()+'点先取'},nxWinPt()+'点先取'),h('div',{key:'tray',className:'nx-t-tray','aria-hidden':true}),h('div',{key:'chev',className:'nx-t-chev','aria-hidden':true})],
   h('div',{className:scoreClass('d'),'aria-label':'相手のスコア '+visibleScore('d')},h(NxNumber,{value:visibleScore('d')})),
   h('span',{className:'nx-score-label d'},'相手'),
-  NX_CFG.remove&&h('div',{className:'nx-rm d'+(st.rmD?' used':''),'aria-label':st.rmD?'相手は消すを使った':'相手は消すを使える'},NX_TEAL?h('span',null,st.rmD?'0':'1'):'✂'),
-  NX_CFG.remove&&h('div',{className:'nx-rm p'+(st.rmP?' used':''),'aria-label':st.rmP?'消すを使った':'消すを使える'},NX_TEAL?h('span',null,st.rmP?'0':'1'):'✂'),
+   NX_CFG.remove&&h('div',{className:'nx-rm d'+(st.rmD?' used':''),'aria-label':st.rmD?'相手は消すを使った':'相手は消すを使える'},workshop&&h(NxWorkshopIcon,{kind:'scissors'}),NX_TEAL?h('span',null,st.rmD?'0':'1'):'✂'),
+   NX_CFG.remove&&h('div',{className:'nx-rm p'+(st.rmP?' used':''),'aria-label':st.rmP?'消すを使った':'消すを使える'},workshop&&h(NxWorkshopIcon,{kind:'scissors'}),NX_TEAL?h('span',null,st.rmP?'0':'1'):'✂'),
   h('div',{className:scoreClass('p'),'aria-label':'自分のスコア '+visibleScore('p')},h(NxNumber,{value:visibleScore('p')})),
   h('span',{className:'nx-score-label p'},'自分'),
   h('div',{className:'nx-time'+(st.time<=3&&st.phase==='play'?' low':''),role:'timer','aria-label':'残り '+st.time+' 秒'},h(NxNumber,{value:st.time})),
   queue('d'),
   h('section',{className:'nx-field','aria-label':'場の札'},
-   NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h('img',{key:'slot'+i,className:'nx-slot',src:NX_TEAL?NX_T+'empty-slot.webp':NX_V2+'slot.webp',alt:'',draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(tut===4&&k===0?' nx-tut-glow':'')+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
+    NX_SKIN==='v2'?[0,1,2,3].filter(i=>i>=Math.min(4,st.field.length)).map(i=>h(workshop?'div':'img',{key:'slot'+i,className:'nx-slot',src:workshop?undefined:NX_TEAL?NX_T+'empty-slot.webp':NX_V2+'slot.webp',alt:'','aria-hidden':true,draggable:false,style:{left:NX_FIELD_X[i]+'%'}})):null,st.field.slice(shownFrom).map((v,j)=>{const k=shownFrom+j;return card(v,st.by[k],'nx-field-card'+(tut===4&&k===0?' nx-tut-glow':'')+(NX_CFG.remove&&!st.rmP&&st.phase==='play'?' nx-removable':''),{key:st.rn+'-'+k,style:{left:NX_FIELD_X[j]+'%','--slot':j},...(NX_CFG.remove?{onClick:()=>removeAt('p',k)}:{})});}), // v330: 5枚目からは新しい4枚だけ見せる
 
    // v328: 相手の次の札を、場の次の空き枠にゴースト表示（出せる時だけ）。NX_CFG.ghost:false で消える
    (NX_CFG.ghost&&st.phase==='play'&&st.field.length<4&&nxLegal(st.dQ[0],st.field))?card(st.dQ[0],'d','nx-field-card nx-ghost',{key:'ghost-'+st.rn+'-'+st.field.length+'-'+st.dQ[0],style:{left:NX_FIELD_X[st.field.length]+'%'},'aria-hidden':true}):null,
@@ -851,7 +856,8 @@ function NextMode({onBack}){
     h('span',{className:'nx-left'},h('small',null,'あと'),h(NxNumber,{value:Math.max(0,tgt-fs)}))),
    NX_CFG.stairs&&trapNext?h('div',{className:'nx-trap','aria-label':'地雷 '+trapNext},'💣'+trapNext):null),
   queue('p'),
-  h('div',{ref:trashRef,className:'nx-action discard nx-trash'+(tut<0&&(st.dcP|0)>=NX_CFG.discardMax?' nx-trash-empty':''),'aria-label':'トラッシュ（札をここへ引っぱると捨てる）'},
+   h('div',{ref:trashRef,className:'nx-action discard nx-trash'+(tut<0&&(st.dcP|0)>=NX_CFG.discardMax?' nx-trash-empty':''),'aria-label':'トラッシュ（札をここへ引っぱると捨てる）'},
+   workshop&&h(NxWorkshopIcon,{kind:'trash'}),
    tut<0&&h('span',{className:'nx-dc-left','aria-label':'捨てられる残り '+Math.max(0,NX_CFG.discardMax-(st.dcP|0))+' 枚'},h(NxNumber,{value:Math.max(0,NX_CFG.discardMax-(st.dcP|0))}))),
   online&&netNote&&h('div',{className:'nx-net-note',role:'status'},netNote),
   tut>=0&&h('div',{className:'nx-tut'+(tut===0||tut>=5?' big':''),role:'dialog','aria-label':TUT_TEXT[tut][0]},
@@ -867,8 +873,9 @@ function NextMode({onBack}){
   (st.phase==='ready'||st.phase==='end')&&h('div',{className:'nx-overlay'},h('section',{className:'nx-dialog',role:'dialog','aria-modal':true,'aria-label':st.phase==='ready'?'NEXTをはじめる':'対戦結果'},
    h('h1',null,st.phase==='ready'?'NEXT':win?'勝ち！':'もう一歩！'),
    h('div',{className:'nx-ver-badge'},'バージョン '+APP_VER),
-   NX_CFG.bgm&&h('button',{className:'nx-bgm-btn',onClick:()=>setBgmOn(nxBgmToggle()),'aria-pressed':bgmOn},bgmOn?'🔈 音楽 オン':'🔇 音楽 オフ'),
-   st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・赤が相手。先に十五点で勝ち。',h('br'),'場の札はタップで1ラウンド1回だけ消せる。')):
+    NX_CFG.bgm&&h('button',{className:'nx-bgm-btn',onClick:()=>setBgmOn(nxBgmToggle()),'aria-pressed':bgmOn},bgmOn?'🔈 音楽 オン':'🔇 音楽 オフ'),
+    st.phase==='ready'&&h('button',{className:'nx-skin-toggle',onClick:toggleSkin,'aria-label':'見た目を切り替える'},workshop?'見た目を比較：青緑に切り替え':'見た目を比較：魔法の工房に切り替え'),
+    st.phase==='ready'?(NX_CFG.stairs?h('p',null,'10・20・30・40・50にぴったりで得点。',h('br'),'こえたら目標が上がる（50まで）。',h('br'),'💣11・22・33・44を作ったら自分の点が全部相手へ。',h('br'),'先に'+nxWinPt()+'点で勝ち。'):workshop?h('p',null,'札を出して、ぴったり10をつくろう。',h('br'),'青はあなた、赤は相手。15点先取。',h('br'),'場の札は1ラウンド1回タップで消せる。'):h('p',null,'先頭の札を出すか、捨てるか。',h('br'), 'ぴったり十をつくろう。',h('br'),'青が自分・赤が相手。先に十五点で勝ち。',h('br'),'場の札はタップで1ラウンド1回だけ消せる。')):
     h('div',{className:'nx-result'},h(NxNumber,{value:st.pPt}),h('span',null,'−'),h(NxNumber,{value:st.dPt})),
    lobby&&lobby.step==='err'?h('p',{className:'nx-net-err'},lobby.text):null,
    online?[h('button',{key:'rm',onClick:again,disabled:!!(rematch&&rematch.me)},rematch&&rematch.me?'相手を待っています…':rematch&&rematch.op?'もう一度（相手は待っています）':'もう一度'),
@@ -890,6 +897,7 @@ function NextMode({onBack}){
 // ── 開始前のローディング：画像（背景・札・数字）と音を全部読み終えてから画面を出す
 function nxLoadAll(onProgress){
  const imgs=NX_TEAL?['background','card-blue','card-red','empty-slot','field-tray','score-blue','score-red','pill-goal','pill-timer','pill-total','pill-scissors','trash-ready','trash-disabled','badge-count','icon-chevron-down','logo-next','selection-glow','dialog-panel','btn-primary','btn-secondary','btn-level-on','btn-level-off','count-badge','banner-reward','banner-timeup','callout-ribbon','icon-back','code-box'].map(n=>NX_T+n+'.webp'):NX_SKIN==='v2'?['bg','card','slot','owner-p','owner-d','trash','trash-hot','score-p','score-d','clock','total'].map(n=>NX_V2+n+'.webp').concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_V2+'d-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_V2+'dc-'+d+'.webp')):['img/next-v319/'+(NX_CFG.mat?'court':'court-nomat-v2')+'.webp','img/next-v319/card.webp'].concat([0,1,2,3,4,5,6,7,8,9].map(d=>NX_ASSET+'digit-'+d+'.webp'),[1,2,3,4,5].map(d=>NX_ASSET+'digitc-'+d+'.webp'));
+ imgs.push(...NX_WORKSHOP_ASSETS);
  const total=imgs.length+1;let done=0;const tick=()=>{done++;onProgress(done/total);};
  const one=src=>new Promise(res=>{const im=new Image();const fin=()=>{tick();res();};im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(fin);};im.onerror=fin;im.src=src;});
  const snd=Promise.resolve(nxPrepareAudio()).catch(()=>{}).then(tick);
@@ -900,7 +908,7 @@ function NxBoot(){
  const[p,setP]=useState(0),[ready,setReady]=useState(false);
  useEffect(()=>{const t0=Date.now();nxLoadAll(setP).then(()=>{setP(1);setTimeout(()=>setReady(true),Math.max(0,450-(Date.now()-t0)));});},[]);
  if(ready)return h(NextMode,{onBack:()=>location.reload()});
- return h('main',{className:'nx-loading',role:'status','aria-label':'読み込み中'},
+ return h('main',{className:'nx-loading'+(nxWorkshopSaved()?' nx-workshop-loading':''),role:'status','aria-label':'読み込み中'},
   h('div',{className:'nx-loading-title'},'NEXT'),
   h('div',{className:'nx-loading-bar'},h('i',{style:{width:Math.round(p*100)+'%'}})),
   h('div',{className:'nx-loading-text'},'読み込み中… '+Math.round(p*100)+'%'),
