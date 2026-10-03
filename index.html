@@ -335,7 +335,7 @@ function NxWorkshopIcon({kind}){return h('svg',{viewBox:'0 0 32 32','aria-hidden
 const NX_FIELD_X=NX_TEAL?[4.07,27.78,51.48,75.19]:NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
 // v36: 3つの演出は各スイッチを false で元に戻せる（discardSuction / victoryCelebration は追加SEも切替）。
-const NX_CFG={landRipple:true,discardSuction:true,victoryCelebration:true,remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:true,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={landRipple:true,discardSuction:true,victoryCelebration:true,remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:false,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -391,7 +391,7 @@ const NX_BGM={buf:null,src:null,gain:null,pending:null,on:(()=>{try{return local
 function nxPrepareBgm(){if(!NX_CFG.bgm||NX_BGM.buf||NX_BGM.pending)return NX_BGM.pending;
  NX_BGM.pending=fetch('bgm/battle.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>AC.decodeAudioData(b)).then(b=>{NX_BGM.buf=b;nxBgmSync();}).catch(()=>{}).finally(()=>{NX_BGM.pending=null;});return NX_BGM.pending;}
 let nxBgmWant=false;
-function nxBgmSync(){try{const want=NX_CFG.bgm&&NX_BGM.on&&nxBgmWant&&NX_BGM.buf;
+function nxBgmSync(){try{const want=NX_CFG.bgm&&NX_BGM.on&&nxBgmWant&&!document.hidden&&NX_BGM.buf;
  if(want&&!NX_BGM.src){resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_BGM.buf;src.loop=true;
   g.gain.setValueAtTime(.0001,AC.currentTime);g.gain.linearRampToValueAtTime(NX_CFG.bgmVol,AC.currentTime+.6);
   src.connect(g);g.connect(AC.destination);src.start();NX_BGM.src=src;NX_BGM.gain=g;}
@@ -438,6 +438,7 @@ function nxVictoryFanfare(){
  [523.25,659.25,1046.5].forEach(f=>nxTone(f,{delay:.82,d:.65,v:.023}));
 }
 function nxSE(kind,who='p',points=1){
+ if(document.hidden)return;
  if(kind==='discard'&&NX_CFG.discardSuction){try{resumeAC();nxDiscardWhoosh(who==='p'?1:.48);}catch(e){}return;}
  if(kind==='victory'&&NX_CFG.victoryCelebration){try{resumeAC();nxVictoryFanfare();}catch(e){}return;}
  if(kind==='remove'){try{resumeAC();nxRemoveSE(who==='p'?1:.6);}catch(e){}return;}
@@ -532,7 +533,8 @@ function NextMode({onBack}){
  useEffect(()=>{if(st.phase==='play')setCallout(null);},[st.phase]);
  const[bgmOn,setBgmOn]=useState(NX_BGM.on);
  useEffect(()=>{nxBgmPlay(tut<0&&['count','play','hold'].includes(st.phase));},[st.phase,tut]);
- useEffect(()=>()=>nxBgmPlay(false),[]);
+ useEffect(()=>{const visibility=()=>{if(document.hidden)nxStopAudio();nxBgmSync();};document.addEventListener('visibilitychange',visibility);
+  return()=>{document.removeEventListener('visibilitychange',visibility);nxBgmPlay(false);};},[]);
  const jk=useRef({p:0,d:0,t:99,ph:'',reach:{p:0,d:0}});
  useEffect(()=>{const J=jk.current,wp=nxWinPt();
   if(tut>=0){Object.assign(J,{p:st.pPt,d:st.dPt,t:st.time,ph:st.phase});return;}
