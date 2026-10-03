@@ -269,7 +269,7 @@ body{background:#e5cda8;min-height:100dvh;overflow:hidden;position:fixed;width:1
 <script>
 // 本体テンクル v333 の「ネクスト」をそのまま移植（見た目・ルール・AI・SE）。素材は img/next-v319・se/next-v320
 // バージョン：上げるたびに APP_VER と version.txt を同じ値にする（画面の右下に表示）
-const APP_VER='v38'; // 魔法のカード工房：見た目のみ変更（ルール・AI・音は維持）
+const APP_VER='v39'; // 採用BGM Card Duel on the Table に差し替え
 // const APP_VER='v36'; // 着地の波動・捨てる吸い込みと合成SE・勝利の紙吹雪とファンファーレ
 // const APP_VER='v34'; // 青緑テーブル版デザイン（チャッピー素材、NX_TEAL）
 // const APP_VER='v33'; // 15点先取に
@@ -335,7 +335,7 @@ function NxWorkshopIcon({kind}){return h('svg',{viewBox:'0 0 32 32','aria-hidden
 const NX_FIELD_X=NX_TEAL?[4.07,27.78,51.48,75.19]:NX_SKIN==='v2'?[3,27.7,52.3,77]:[10.5,31,51.6,72.2]; // 場の4枠の左端（%）
 // remove：1ラウンドに1回、場の札（誰のでも）をタップで消せる。消したら左に詰める
 // v36: 3つの演出は各スイッチを false で元に戻せる（discardSuction / victoryCelebration は追加SEも切替）。
-const NX_CFG={landRipple:true,discardSuction:true,victoryCelebration:true,remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:false,voiceVol:.3,bgm:true,bgmVol:.22,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
+const NX_CFG={landRipple:true,discardSuction:true,victoryCelebration:true,remove:true,pushDiscard:false,stairs:false,mat:false,row:false,ghost:false,winPt:15,roundSec:20,voice:false,voiceVol:.3,bgm:true,bgmVol:.27,side:true,discardMax:10,queueN:3,countFrom:5,countStepMs:650,goMs:500,tenHoldMs:1500,timeUpMs:1200};
 const NX_AI={easy:{label:'やさしい',delay:1250,jitter:600,read:.3,safe:.4},normal:{label:'ふつう',delay:650,jitter:650,read:.7,safe:.55},hard:{label:'つよい',delay:360,jitter:300,read:.95,safe:.85}};
 const NX_ASSET='img/next-v319/';
 // 札の配り方：同じ数字3連続なし＋「自分の札だけで続けて10」にならない（並んだ2〜4枚の合計が10になる並びを作らない。サーバーの nx.js も同じ）
@@ -386,10 +386,10 @@ function nxVoice(kind,force=false,only=null){try{if(!NX_CFG.voice)return;const n
  resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_JK.buf[pick];g.gain.value=NX_CFG.voiceVol;
  src.connect(g);g.connect(AC.destination);src.onended=()=>{if(NX_JK.src===src)NX_JK.src=null;src.disconnect();g.disconnect();};
  NX_JK.src=src;NX_JK.at=now;try{NX_JK.onSay&&NX_JK.onSay(kind,pick);}catch(e){}src.start(AC.currentTime+(kind==='ten'?.12:0));}catch(e){}}
-// v27 BGM：bgm/battle.mp3 を対戦中（カウント〜決着前）だけループ。NX_CFG.bgm:false で消える。音量は NX_CFG.bgmVol。オンオフはタイトルで切替（端末に記録）
+// v39 BGM：Card Duel on the Table（bgm/battle.mp3） を対戦中（カウント〜決着前）だけループ。NX_CFG.bgm:false で消える。音量は NX_CFG.bgmVol。オンオフはタイトルで切替（端末に記録）
 const NX_BGM={buf:null,src:null,gain:null,pending:null,on:(()=>{try{return localStorage.getItem('nxBgm')!=='0';}catch(e){return true;}})()};
 function nxPrepareBgm(){if(!NX_CFG.bgm||NX_BGM.buf||NX_BGM.pending)return NX_BGM.pending;
- NX_BGM.pending=fetch('bgm/battle.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>AC.decodeAudioData(b)).then(b=>{NX_BGM.buf=b;nxBgmSync();}).catch(()=>{}).finally(()=>{NX_BGM.pending=null;});return NX_BGM.pending;}
+ NX_BGM.pending=fetch('bgm/battle.mp3?v=39').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>AC.decodeAudioData(b)).then(b=>{NX_BGM.buf=b;nxBgmSync();}).catch(()=>{}).finally(()=>{NX_BGM.pending=null;});return NX_BGM.pending;}
 let nxBgmWant=false;
 function nxBgmSync(){try{const want=NX_CFG.bgm&&NX_BGM.on&&nxBgmWant&&!document.hidden&&NX_BGM.buf;
  if(want&&!NX_BGM.src){resumeAC();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=NX_BGM.buf;src.loop=true;
